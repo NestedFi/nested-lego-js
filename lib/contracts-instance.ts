@@ -1,8 +1,8 @@
 import { Chain, CreatePortfolioMetadata, HexNumber, INestedContracts, NATIVE_TOKEN } from '.';
-import { CreatePortfolioResult, HexString, SwapArgument, SwapOrder } from './public-types';
+import { ChainAndId, CreatePortfolioResult, HexString, SwapArgument, SwapOrder } from './public-types';
 import { fetchZxSwap } from './0x';
 import { buildOrderStruct, hexToObject, objectToHex, removeFees, safeMult, wrap } from './utils';
-import { BigNumber, constants, Contract, ContractTransaction, Signer, utils } from 'ethers';
+import { BigNumber, constants, Contract, ContractReceipt, ContractTransaction, Signer, utils } from 'ethers';
 import { FIXED_FEE } from './default-contracts';
 
 interface InternalSwapOrder extends SwapOrder {
@@ -118,25 +118,34 @@ export class NestedContractsInstance implements INestedContracts {
         };
     }
 
+    async addTokenToPortfolio(portfolioId: HexString | ChainAndId, swaps: SwapOrder[]): Promise<ContractReceipt> {
+        const { spentToken, total, orders } = this._extractSwaps(swaps);
+
+        // infer the token ID
+        let nftId: BigNumber;
+        if (/^0x[a-f\d]+$/i.test(portfolioId)) {
+            nftId = BigNumber.from(portfolioId);
+        } else {
+            const [_, idChain, id] = /^(\w+):(\d+)$/.exec(portfolioId) ?? [];
+            if (idChain !== this.chain) {
+                throw new Error(
+                    `The given porfolio ID "${portfolioId}" cannot be processed on this chain (${this.chain})`,
+                );
+            }
+            nftId = BigNumber.from(parseInt(id));
+        }
+
+        // actual transaction
+        const portfolio = (await this.factory.addTokens(nftId, spentToken, total, orders, {
+            // compute how much native token we need as input:
+            value: spentToken === NATIVE_TOKEN ? total : 0,
+        })) as ContractTransaction;
+        const receipt = await portfolio.wait();
+        return receipt;
+    }
+
     async createPortfolio(swaps: SwapOrder[], meta?: CreatePortfolioMetadata): Promise<CreatePortfolioResult> {
-        // check spent token
-        const inputTokens = new Set(swaps.map(x => x.arg.spendToken));
-        if (inputTokens.size !== 1) {
-            throw new Error('All swaps must have the same spent token as input');
-        }
-        const spentToken = swaps[0].arg.spendToken.toLowerCase();
-
-        // extract call data from swaps
-        const internals = swaps.map(x => (x as InternalSwapOrder)._internal);
-        if (internals.some(x => !x)) {
-            throw new Error(
-                'Swaps must be preppared via a call to .prepareSwap(). Do not try to mint swap orders yourself.',
-            );
-        }
-        const orders = internals.map(s => hexToObject(s));
-
-        // compute total input amount
-        const total = swaps.map(s => BigNumber.from(s.spentQty)).reduce((a, b) => a.add(b), BigNumber.from(0));
+        const { spentToken, total, orders } = this._extractSwaps(swaps);
 
         // check that we know the NftCreated event
         const int = this.nestedFactoryInterface;
@@ -165,5 +174,27 @@ export class NestedContractsInstance implements INestedContracts {
             publicUrl: `https://app.nested.finance/explorer/${this.chain}:${nftId.toNumber()}`,
             receipt,
         };
+    }
+
+    private _extractSwaps(swaps: SwapOrder[]) {
+        // infer spent token
+        const inputTokens = new Set(swaps.map(x => x.arg.spendToken));
+        if (inputTokens.size !== 1) {
+            throw new Error('All swaps must have the same spent token as input');
+        }
+        const spentToken = swaps[0].arg.spendToken.toLowerCase();
+
+        // extract call data from swaps
+        const internals = swaps.map(x => (x as InternalSwapOrder)._internal);
+        if (internals.some(x => !x)) {
+            throw new Error(
+                'Swaps must be preppared via a call to .prepareSwap(). Do not try to mint swap orders yourself.',
+            );
+        }
+        const orders = internals.map(s => hexToObject(s));
+
+        // compute total input amount
+        const total = swaps.map(s => BigNumber.from(s.spentQty)).reduce((a, b) => a.add(b), BigNumber.from(0));
+        return { spentToken, total, orders };
     }
 }

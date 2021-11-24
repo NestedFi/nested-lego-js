@@ -9,6 +9,7 @@ export enum Chain {
 }
 export type HexString = `0x${string}`;
 export type HexNumber = `${'' | '-'}${HexString}`;
+export type ChainAndId = `${Chain}:${number}`;
 
 export type SwapArgument = {
     readonly spendToken: HexString;
@@ -45,6 +46,12 @@ export interface INestedContracts {
      */
     createPortfolio(swaps: SwapOrder[], metadata?: CreatePortfolioMetadata): Promise<CreatePortfolioResult>;
 
+    /**
+     * Updates a porfolio, by adding tokens in it.
+     * Same behaviour as `createPortfolio`, but on an existing porfolio.
+     */
+    addTokenToPortfolio(portfolioId: HexString | ChainAndId, swaps: SwapOrder[]): Promise<ContractReceipt>;
+
     /** Returns your balance of the given ERC20 token (helper function) */
     balanceOf(tokenAddress: HexString): Promise<HexNumber>;
 
@@ -57,7 +64,7 @@ export interface INestedContracts {
 
 export interface CreatePortfolioResult {
     /** A porfolio identifier, unique accross all chains (identifier used by Nested.finance to identify porfolios)  */
-    id: `${Chain}:${number}`;
+    id: ChainAndId;
     /** The portfolio ID (unique in the given chain) */
     idInChain: HexString;
     /** The chain this porfolio is on (just as a reminder) */

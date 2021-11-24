@@ -1,3 +1,4 @@
+import 'mocha';
 import { utils, Wallet } from 'ethers';
 import { Chain, HexNumber, HexString, NATIVE_TOKEN, NestedConnection } from '../lib';
 
