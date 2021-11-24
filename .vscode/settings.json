@@ -2,7 +2,7 @@
     "mochaExplorer.files": ["lib/**/*.test.ts", "test/**/*.test.ts"],
     "mochaExplorer.require": ["ts-node/register"],
     "mochaExplorer.cwd": ".",
-    "mochaExplorer.debuggerPort": 9566,
+    "mochaExplorer.debuggerPort": 9567,
     "mochaExplorer.envPath": ".env",
     "mochaExplorer.timeout": 200000,
     "mochaExplorer.debuggerConfig": "Debug Mocha Tests",

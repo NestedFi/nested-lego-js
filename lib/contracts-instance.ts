@@ -1,7 +1,7 @@
-import { Chain, CreatePortfolioMetadata, HexNumber, INestedContracts } from '.';
+import { Chain, CreatePortfolioMetadata, HexNumber, INestedContracts, NATIVE_TOKEN } from '.';
 import { CreatePortfolioResult, HexString, SwapArgument, SwapOrder } from './public-types';
 import { fetchZxSwap } from './0x';
-import { buildOrderStruct, hexToObject, objectToHex, safeMult } from './utils';
+import { buildOrderStruct, hexToObject, objectToHex, removeFees, safeMult, wrap } from './utils';
 import { BigNumber, constants, Contract, ContractTransaction, Signer, utils } from 'ethers';
 import { FIXED_FEE } from './default-contracts';
 
@@ -55,7 +55,7 @@ export class NestedContractsInstance implements INestedContracts {
     }
 
     prepareSwap(arg: SwapArgument): Promise<InternalSwapOrder> {
-        if (arg.buyToken === arg.spendToken) {
+        if (arg.buyToken.toLowerCase() === arg.spendToken.toLowerCase()) {
             // when the input is the same as the output, use the flat operator
             return this._prepareFlat(arg);
         } else {
@@ -69,11 +69,11 @@ export class NestedContractsInstance implements INestedContracts {
             // specify that we're using the flat operator
             'Flat',
             // specify output token for fees computation
-            arg.buyToken,
+            wrap(this.chain, arg.buyToken),
             // see Flat operator implementation:
             [
-                ['address', arg.spendToken],
-                ['uint256', arg.spendQty],
+                ['address', wrap(this.chain, arg.spendToken)],
+                ['uint256', removeFees(arg.spendQty)],
             ],
         );
 
@@ -92,18 +92,18 @@ export class NestedContractsInstance implements INestedContracts {
         const zxQuote = await fetchZxSwap(this.chain, {
             ...arg,
             // remove fee from the input amount
-            spendQty: safeMult(BigNumber.from(arg.spendQty), 1 - FIXED_FEE).toHexString() as HexNumber,
+            spendQty: removeFees(arg.spendQty),
         });
 
         const order = buildOrderStruct(
             // specify that we're using the 0x operator
             'ZeroEx',
             // specify output token
-            arg.buyToken,
+            wrap(this.chain, arg.buyToken),
             // see ZeroEx operator implementation:
             [
-                ['address', arg.spendToken],
-                ['address', arg.buyToken],
+                ['address', wrap(this.chain, arg.spendToken)],
+                ['address', wrap(this.chain, arg.buyToken)],
                 ['bytes', zxQuote.data],
             ],
         );
@@ -124,7 +124,7 @@ export class NestedContractsInstance implements INestedContracts {
         if (inputTokens.size !== 1) {
             throw new Error('All swaps must have the same spent token as input');
         }
-        const spentToken = swaps[0].arg.spendToken;
+        const spentToken = swaps[0].arg.spendToken.toLowerCase();
 
         // extract call data from swaps
         const internals = swaps.map(x => (x as InternalSwapOrder)._internal);
@@ -143,16 +143,14 @@ export class NestedContractsInstance implements INestedContracts {
         const createdTopic = int.getEventTopic(int.getEvent('NftCreated'));
 
         // perform the actual transaction
-        const portfolio = (await this.factory.create(
-            meta?.originalPortfolioId ?? 0,
-            spentToken,
-            total,
-            orders,
-        )) as ContractTransaction;
-        const finish = await portfolio.wait();
+        const portfolio = (await this.factory.create(meta?.originalPortfolioId ?? 0, spentToken, total, orders, {
+            // compute how much native token we need as input:
+            value: spentToken === NATIVE_TOKEN ? total : 0,
+        })) as ContractTransaction;
+        const receipt = await portfolio.wait();
 
         // lookup for the NFT id by reading the transaction logs
-        const createdEventLog = finish.logs.find(x => x.topics.includes(createdTopic));
+        const createdEventLog = receipt.logs.find(x => x.topics.includes(createdTopic));
         const nftId = createdEventLog && (int.parseLog(createdEventLog).args.nftId as BigNumber);
         if (!nftId) {
             // should not happen, as long as the contract emits NftCreated event.
@@ -165,6 +163,7 @@ export class NestedContractsInstance implements INestedContracts {
             chain: this.chain,
             privateUrl: `https://app.nested.finance/portfolios/${this.chain}:${nftId.toNumber()}`,
             publicUrl: `https://app.nested.finance/explorer/${this.chain}:${nftId.toNumber()}`,
+            receipt,
         };
     }
 }

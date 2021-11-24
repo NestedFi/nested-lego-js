@@ -4,7 +4,7 @@
             "name": "Debug Mocha Tests",
             "type": "node",
             "request": "attach",
-            "port": 9578,
+            "port": 9567,
             "protocol": "inspector",
             "timeout": 30000,
             "smartStep": false,

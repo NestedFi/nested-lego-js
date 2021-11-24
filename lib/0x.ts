@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers';
 import { Chain, HexString, SwapArgument } from './public-types';
-import { unreachable } from './utils';
+import { unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 
 /** 0x answer will have this shape */
@@ -52,7 +52,10 @@ function zxQuoteUrl(chain: Chain, config: SwapArgument): string {
     // Wana enrich this api with a buy amount instead of sell ?
     //   👉  `&buyAmount=${BigNumber.from(config.buyQty)}`;
     const op = `&sellAmount=${BigNumber.from(config.spendQty)}`;
-    return `${endpoint}swap/v1/quote?sellToken=${config.spendToken}&buyToken=${config.buyToken}${op}&slippagePercentage=${config.slippage}`;
+    return `${endpoint}swap/v1/quote?sellToken=${wrap(chain, config.spendToken)}&buyToken=${wrap(
+        chain,
+        config.buyToken,
+    )}${op}&slippagePercentage=${config.slippage}`;
 }
 
 function zxEndpoint(chain: Chain) {

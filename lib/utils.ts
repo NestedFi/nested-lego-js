@@ -1,6 +1,7 @@
 import { BigNumber, utils } from 'ethers';
 import w3utils from 'web3-utils';
-import { HexString, ZERO_ADDRESS } from './public-types';
+import { defaultContracts, FIXED_FEE } from './default-contracts';
+import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
 
 export function unreachable(value: never): Error {
     return new Error('Value was supposed to be unreachable' + value);
@@ -84,4 +85,19 @@ export function safeMult(bn: BigNumber, ratio: number): BigNumber {
     const ratioWithPrecision = BigNumber.from(Math.floor(largeRatio));
 
     return bn.mul(ratioWithPrecision).div(factor);
+}
+
+export function removeFees(amt: HexNumber) {
+    return safeMult(BigNumber.from(amt), 1 - FIXED_FEE).toHexString() as HexNumber;
+}
+
+export function wrap(chain: Chain, token: HexString): HexString {
+    if (token.toLowerCase() === NATIVE_TOKEN) {
+        const wrapped = defaultContracts[chain].wrappedToken;
+        if (!wrapped) {
+            throw new Error('Chain not supported: ' + chain);
+        }
+        return wrapped;
+    }
+    return token;
 }

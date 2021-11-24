@@ -1,12 +1,12 @@
 import 'mocha';
 import { expect, assert } from 'chai';
 import { Chain, connect, HexString, INestedContracts } from '../lib';
-import { native_token, poly_sushi, poly_usdc, testConfig } from './test-utils';
+import { native_token, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
 
 describe('Create', () => {
     let instance: INestedContracts;
     before(async () => {
-        instance = connect(testConfig());
+        instance = connect(await testConfig());
         if (!(await instance.isApproved(poly_usdc.contract, poly_usdc.makeAmount(1000).toHexString() as HexString))) {
             console.log('🔃 Approving USDC...');
             await instance.approve(poly_usdc.contract);
@@ -19,7 +19,7 @@ describe('Create', () => {
         const swap = await instance.prepareSwap({
             spendToken: poly_usdc.contract,
             buyToken: poly_sushi.contract,
-            slippage: 0.03,
+            slippage: TEST_SLIPPAGE,
             spendQty: poly_usdc.smallAmount,
         });
 
@@ -42,7 +42,7 @@ describe('Create', () => {
         const swap = await instance.prepareSwap({
             spendToken: poly_usdc.contract,
             buyToken: poly_usdc.contract,
-            slippage: 0.03,
+            slippage: TEST_SLIPPAGE,
             spendQty: poly_usdc.smallAmount,
         });
 
@@ -55,11 +55,12 @@ describe('Create', () => {
         const swap = await instance.prepareSwap({
             spendToken: native_token.contract,
             buyToken: poly_sushi.contract,
-            slippage: 0.03,
+            slippage: TEST_SLIPPAGE,
             spendQty: native_token.smallAmount,
         });
 
-        await instance.createPortfolio([swap]);
+        const { idInChain } = await instance.createPortfolio([swap]);
+        assert.isString(idInChain);
     });
 
     it('portfolio containing native token with native token', async () => {
@@ -67,11 +68,12 @@ describe('Create', () => {
         const swap = await instance.prepareSwap({
             spendToken: native_token.contract,
             buyToken: native_token.contract,
-            slippage: 0.03,
+            slippage: TEST_SLIPPAGE,
             spendQty: native_token.smallAmount,
         });
 
-        await instance.createPortfolio([swap]);
+        const { idInChain } = await instance.createPortfolio([swap]);
+        assert.isString(idInChain);
     });
 
     it('pay native token portfolio with another token', async () => {
@@ -79,10 +81,11 @@ describe('Create', () => {
         const swap = await instance.prepareSwap({
             spendToken: poly_usdc.contract,
             buyToken: native_token.contract,
-            slippage: 0.03,
+            slippage: TEST_SLIPPAGE,
             spendQty: poly_usdc.smallAmount,
         });
 
-        await instance.createPortfolio([swap]);
+        const { idInChain } = await instance.createPortfolio([swap]);
+        assert.isString(idInChain);
     });
 });

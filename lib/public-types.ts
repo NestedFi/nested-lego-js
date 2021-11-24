@@ -1,3 +1,5 @@
+import type { ContractReceipt } from 'ethers';
+
 export enum Chain {
     eth = 'eth',
     bsc = 'bsc',
@@ -64,6 +66,8 @@ export interface CreatePortfolioResult {
     privateUrl: string;
     /** A public URL that can be used to show off this porfolio on Nested.finance */
     publicUrl: string;
+    /** Transaction receipt */
+    receipt: ContractReceipt;
 }
 
 export interface SwapOrder {
