@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { Chain, HexString, SwapArgument } from './public-types';
+import { Chain, HexString, OrderCreationArg } from './public-types';
 import { unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 
@@ -46,7 +46,7 @@ interface ZeroXAnswer {
     buyTokenToEthRate: string;
 }
 
-function zxQuoteUrl(chain: Chain, config: SwapArgument): string {
+function zxQuoteUrl(chain: Chain, config: OrderCreationArg): string {
     const endpoint = zxEndpoint(chain);
 
     // Wana enrich this api with a buy amount instead of sell ?
@@ -77,7 +77,7 @@ function zxEndpoint(chain: Chain) {
     }
 }
 
-export async function fetchZxSwap(chain: Chain, config: SwapArgument): Promise<ZeroXAnswer> {
+export async function fetchZxSwap(chain: Chain, config: OrderCreationArg): Promise<ZeroXAnswer> {
     const url = zxQuoteUrl(chain, config);
     const response = await fetch(url);
     const json = await response.json();

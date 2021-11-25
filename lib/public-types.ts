@@ -11,11 +11,17 @@ export type HexString = `0x${string}`;
 export type HexNumber = `${'' | '-'}${HexString}`;
 export type ChainAndId = `${Chain}:${number}`;
 
-export type SwapArgument = {
+export type OrderCreationArg = {
+    /** Token you'd like to spend */
     readonly spendToken: HexString;
+    /** Token you'd like to receive */
     readonly buyToken: HexString;
-    /** Accepted slippage (ex: '0.03' means 3% slippage accepted) */
+    /**
+     * Accepted slippage (ex: '0.03' means 3% slippage accepted).
+     * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
+     */
     readonly slippage: number;
+    /** Spent quantity */
     readonly spendQty: HexNumber;
 };
 
@@ -34,23 +40,37 @@ export interface INestedContracts {
     readonly chain: Chain;
 
     /**
-     * Prepare a swap.
-     * Returns a data structure that you will have to pass to various other methods, like `createPortfolio
+     * Prepare a swap, or an order to transfer a token.
+     * Returns a data structure that you will have to pass to various other methods, like `createPortfolio()`.
      */
-    prepareSwap(swap: SwapArgument): Promise<SwapOrder>;
+    prepareOrder(swap: OrderCreationArg): Promise<Order>;
 
     /**
      * Creates a portfolio.
-     * - Only one budget token allowed for all swap orders
-     * - The nested contracts must have an allowance on budget token (see .approve() & .requiresApproval() methods)
+     * 👉 Only one budget token allowed for all swap orders
+     * 👉 The nested contracts must have an allowance on budget token (see .approve() & .requiresApproval() methods)
      */
-    createPortfolio(swaps: SwapOrder[], metadata?: CreatePortfolioMetadata): Promise<CreatePortfolioResult>;
+    createPortfolio(orders: Order[], metadata?: CreatePortfolioMetadata): Promise<CreatePortfolioResult>;
 
     /**
      * Updates a porfolio, by adding tokens in it.
-     * Same behaviour as `createPortfolio`, but on an existing porfolio.
+     * 👉 Same behaviour as `createPortfolio`, but on an existing porfolio.
      */
-    addTokenToPortfolio(portfolioId: HexString | ChainAndId, swaps: SwapOrder[]): Promise<ContractReceipt>;
+    addTokenToPortfolio(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
+
+    /**
+     * Swap a single token in portfolio, to multiple tokens (that will stay in porfolio).
+     * 👉 All orders must have the same `spendToken`.
+     * 👉 The portfolio must contain enough budget to perform the given swaps.
+     */
+    swapSingleToMulti(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
+
+    /**
+     * Swap multiple tokens in portfolio, to a single token (that will stay in porfolio).
+     * 👉 All orders must have the same `buyToken`.
+     * 👉 The portfolio must contain enough budget to perform the given swaps.
+     */
+    swapMultiToSingle(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
 
     /** Returns your balance of the given ERC20 token (helper function) */
     balanceOf(tokenAddress: HexString): Promise<HexNumber>;
@@ -77,9 +97,9 @@ export interface CreatePortfolioResult {
     receipt: ContractReceipt;
 }
 
-export interface SwapOrder {
-    /** Argument that created this swap order */
-    readonly arg: SwapArgument;
+export interface Order {
+    /** Argument that created this order */
+    readonly arg: OrderCreationArg;
     /** Price given by the AMM */
     readonly price: number;
     /** Guaranteed price given the AMM */

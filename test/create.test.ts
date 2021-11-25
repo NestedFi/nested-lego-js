@@ -16,7 +16,7 @@ describe('Create', () => {
 
     it('Can create a simple portfolio', async () => {
         // swap USDC for SUSHI
-        const swap = await instance.prepareSwap({
+        const swap = await instance.prepareOrder({
             spendToken: poly_usdc.contract,
             buyToken: poly_sushi.contract,
             slippage: TEST_SLIPPAGE,
@@ -39,7 +39,7 @@ describe('Create', () => {
 
     it('porfolio without swap', async () => {
         // buy USDC with USDC => should use the flat operator (= no swap)
-        const swap = await instance.prepareSwap({
+        const swap = await instance.prepareOrder({
             spendToken: poly_usdc.contract,
             buyToken: poly_usdc.contract,
             slippage: TEST_SLIPPAGE,
@@ -52,7 +52,7 @@ describe('Create', () => {
 
     it('pay swap in a portfolio using native token', async () => {
         // wrap + swap MATIC for SUSHI
-        const swap = await instance.prepareSwap({
+        const swap = await instance.prepareOrder({
             spendToken: native_token.contract,
             buyToken: poly_sushi.contract,
             slippage: TEST_SLIPPAGE,
@@ -65,7 +65,7 @@ describe('Create', () => {
 
     it('portfolio containing native token with native token', async () => {
         // build a portfolio with matic
-        const swap = await instance.prepareSwap({
+        const swap = await instance.prepareOrder({
             spendToken: native_token.contract,
             buyToken: native_token.contract,
             slippage: TEST_SLIPPAGE,
@@ -78,7 +78,7 @@ describe('Create', () => {
 
     it('pay native token portfolio with another token', async () => {
         // build a matic portfolio using usdc
-        const swap = await instance.prepareSwap({
+        const swap = await instance.prepareOrder({
             spendToken: poly_usdc.contract,
             buyToken: native_token.contract,
             slippage: TEST_SLIPPAGE,

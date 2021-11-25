@@ -1,11 +1,11 @@
 import { Chain, CreatePortfolioMetadata, HexNumber, INestedContracts, NATIVE_TOKEN } from '.';
-import { ChainAndId, CreatePortfolioResult, HexString, SwapArgument, SwapOrder } from './public-types';
+import { ChainAndId, CreatePortfolioResult, HexString, OrderCreationArg, Order } from './public-types';
 import { fetchZxSwap } from './0x';
 import { buildOrderStruct, hexToObject, objectToHex, removeFees, safeMult, wrap } from './utils';
 import { BigNumber, constants, Contract, ContractReceipt, ContractTransaction, Signer, utils } from 'ethers';
 import { FIXED_FEE } from './default-contracts';
 
-interface InternalSwapOrder extends SwapOrder {
+interface InternalSwapOrder extends Order {
     _internal: string;
 }
 
@@ -54,7 +54,7 @@ export class NestedContractsInstance implements INestedContracts {
         return balance.toHexString() as HexNumber;
     }
 
-    prepareSwap(arg: SwapArgument): Promise<InternalSwapOrder> {
+    prepareOrder(arg: OrderCreationArg): Promise<InternalSwapOrder> {
         if (arg.buyToken.toLowerCase() === arg.spendToken.toLowerCase()) {
             // when the input is the same as the output, use the flat operator
             return this._prepareFlat(arg);
@@ -64,7 +64,7 @@ export class NestedContractsInstance implements INestedContracts {
         }
     }
 
-    private async _prepareFlat(arg: SwapArgument): Promise<InternalSwapOrder> {
+    private async _prepareFlat(arg: OrderCreationArg): Promise<InternalSwapOrder> {
         const order = buildOrderStruct(
             // specify that we're using the flat operator
             'Flat',
@@ -87,7 +87,7 @@ export class NestedContractsInstance implements INestedContracts {
         };
     }
 
-    private async _prepare0xSwap(arg: SwapArgument): Promise<InternalSwapOrder> {
+    private async _prepare0xSwap(arg: OrderCreationArg): Promise<InternalSwapOrder> {
         // build the 0x swap order
         const zxQuote = await fetchZxSwap(this.chain, {
             ...arg,
@@ -118,45 +118,79 @@ export class NestedContractsInstance implements INestedContracts {
         };
     }
 
-    async addTokenToPortfolio(portfolioId: HexString | ChainAndId, swaps: SwapOrder[]): Promise<ContractReceipt> {
-        const { spentToken, total, orders } = this._extractSwaps(swaps);
+    async addTokenToPortfolio(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt> {
+        // infer spent token
+        const { spentToken, total } = this._singleSpentToken(orders);
+        const ordersData = this._extractOrders(orders);
 
         // infer the token ID
-        let nftId: BigNumber;
-        if (/^0x[a-f\d]+$/i.test(portfolioId)) {
-            nftId = BigNumber.from(portfolioId);
-        } else {
-            const [_, idChain, id] = /^(\w+):(\d+)$/.exec(portfolioId) ?? [];
-            if (idChain !== this.chain) {
-                throw new Error(
-                    `The given porfolio ID "${portfolioId}" cannot be processed on this chain (${this.chain})`,
-                );
-            }
-            nftId = BigNumber.from(parseInt(id));
-        }
+        let nftId: BigNumber = this._inferNftId(portfolioId);
 
         // actual transaction
-        const portfolio = (await this.factory.addTokens(nftId, spentToken, total, orders, {
+        const tx: ContractTransaction = await this.factory.addTokens(nftId, spentToken, total, ordersData, {
             // compute how much native token we need as input:
             value: spentToken === NATIVE_TOKEN ? total : 0,
-        })) as ContractTransaction;
-        const receipt = await portfolio.wait();
+        });
+        const receipt = await tx.wait();
         return receipt;
     }
 
-    async createPortfolio(swaps: SwapOrder[], meta?: CreatePortfolioMetadata): Promise<CreatePortfolioResult> {
-        const { spentToken, total, orders } = this._extractSwaps(swaps);
+    async swapSingleToMulti(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt> {
+        // token transfers are not valid for this method => filter them out.
+        orders = orders.filter(o => o.arg.buyToken.toLowerCase() !== o.arg.spendToken.toLowerCase());
+
+        // infer spent token
+        const { spentToken, total } = this._singleSpentToken(orders);
+        const ordersData = this._extractOrders(orders);
+
+        // infer the token ID
+        let nftId: BigNumber = this._inferNftId(portfolioId);
+
+        // actual transaction
+        const tx: ContractTransaction = await this.factory.swapTokenForTokens(nftId, spentToken, total, ordersData);
+        const receipt = await tx.wait();
+        return receipt;
+    }
+
+    async swapMultiToSingle(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt> {
+        // token transfers are not valid for this method => filter them out.
+        orders = orders.filter(o => o.arg.buyToken.toLowerCase() !== o.arg.spendToken.toLowerCase());
+
+        // infer bought token
+        const boughtToken = wrap(this.chain, this._singleBoughtToken(orders));
+        const ordersData = this._extractOrders(orders);
+        const soldAmounts = orders.map(x => BigNumber.from(x.spentQty));
+
+        // infer the token ID
+        let nftId: BigNumber = this._inferNftId(portfolioId);
+
+        // actual transaction
+        const tx: ContractTransaction = await this.factory.sellTokensToNft(nftId, boughtToken, soldAmounts, ordersData);
+        const receipt = await tx.wait();
+        return receipt;
+    }
+
+    async createPortfolio(orders: Order[], meta?: CreatePortfolioMetadata): Promise<CreatePortfolioResult> {
+        // infer spent token
+        const { spentToken, total } = this._singleSpentToken(orders);
+        const ordersData = this._extractOrders(orders);
 
         // check that we know the NftCreated event
         const int = this.nestedFactoryInterface;
         const createdTopic = int.getEventTopic(int.getEvent('NftCreated'));
 
         // perform the actual transaction
-        const portfolio = (await this.factory.create(meta?.originalPortfolioId ?? 0, spentToken, total, orders, {
-            // compute how much native token we need as input:
-            value: spentToken === NATIVE_TOKEN ? total : 0,
-        })) as ContractTransaction;
-        const receipt = await portfolio.wait();
+        const tx: ContractTransaction = await this.factory.create(
+            meta?.originalPortfolioId ?? 0,
+            spentToken,
+            total,
+            ordersData,
+            {
+                // compute how much native token we need as input:
+                value: spentToken === NATIVE_TOKEN ? total : 0,
+            },
+        );
+        const receipt = await tx.wait();
 
         // lookup for the NFT id by reading the transaction logs
         const createdEventLog = receipt.logs.find(x => x.topics.includes(createdTopic));
@@ -176,25 +210,52 @@ export class NestedContractsInstance implements INestedContracts {
         };
     }
 
-    private _extractSwaps(swaps: SwapOrder[]) {
-        // infer spent token
-        const inputTokens = new Set(swaps.map(x => x.arg.spendToken));
+    /** Infer spent token, and throw an error if multiple spent tokens */
+    private _singleSpentToken(orders: Order[]) {
+        const inputTokens = new Set(orders.map(x => x.arg.spendToken));
         if (inputTokens.size !== 1) {
-            throw new Error('All swaps must have the same spent token as input');
+            throw new Error('All orders must have the same spent token as input');
         }
-        const spentToken = swaps[0].arg.spendToken.toLowerCase();
+        const spentToken = orders[0].arg.spendToken.toLowerCase();
+        // compute total amount
+        const total = orders.map(s => BigNumber.from(s.spentQty)).reduce((a, b) => a.add(b), BigNumber.from(0));
+        return { spentToken, total };
+    }
 
-        // extract call data from swaps
-        const internals = swaps.map(x => (x as InternalSwapOrder)._internal);
+    /** Infer bought token, and throw an error if multiple bought tokens */
+    private _singleBoughtToken(orders: Order[]) {
+        const inputTokens = new Set(orders.map(x => x.arg.buyToken));
+        if (inputTokens.size !== 1) {
+            throw new Error('All orders must have the same bought token as input');
+        }
+        return orders[0].arg.buyToken.toLowerCase() as HexString;
+    }
+
+    /** Infer the related NFT id, and throw an error if not on the right chain */
+    private _inferNftId(portfolioId: HexString | ChainAndId): BigNumber {
+        if (/^0x[a-f\d]+$/i.test(portfolioId)) {
+            return BigNumber.from(portfolioId);
+        }
+        const [_, idChain, id] = /^(\w+):(\d+)$/.exec(portfolioId) ?? [];
+        if (idChain !== this.chain) {
+            throw new Error(`The given porfolio ID "${portfolioId}" cannot be processed on this chain (${this.chain})`);
+        }
+        return BigNumber.from(parseInt(id));
+    }
+
+    /** Extract swap orders from data structures given to the user */
+    private _extractOrders(orders: Order[]) {
+        if (!orders.length) {
+            throw new Error('No valid orders provided');
+        }
+
+        // extract call data from orders
+        const internals = orders.map(x => (x as InternalSwapOrder)._internal);
         if (internals.some(x => !x)) {
             throw new Error(
                 'Swaps must be preppared via a call to .prepareSwap(). Do not try to mint swap orders yourself.',
             );
         }
-        const orders = internals.map(s => hexToObject(s));
-
-        // compute total input amount
-        const total = swaps.map(s => BigNumber.from(s.spentQty)).reduce((a, b) => a.add(b), BigNumber.from(0));
-        return { spentToken, total, orders };
+        return internals.map(s => hexToObject(s));
     }
 }
