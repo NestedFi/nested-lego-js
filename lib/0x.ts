@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { Chain, HexString, OrderCreationArg } from './public-types';
+import { Chain, HexString } from './public-types';
 import { unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 
@@ -46,14 +46,14 @@ interface ZeroXAnswer {
     buyTokenToEthRate: string;
 }
 
-function zxQuoteUrl(chain: Chain, config: OrderCreationArg): string {
-    const endpoint = zxEndpoint(chain);
+function zxQuoteUrl(config: SwapArgs): string {
+    const endpoint = zxEndpoint(config.chain);
 
     // Wana enrich this api with a buy amount instead of sell ?
     //   👉  `&buyAmount=${BigNumber.from(config.buyQty)}`;
     const op = `&sellAmount=${BigNumber.from(config.spendQty)}`;
-    return `${endpoint}swap/v1/quote?sellToken=${wrap(chain, config.spendToken)}&buyToken=${wrap(
-        chain,
+    return `${endpoint}swap/v1/quote?sellToken=${wrap(config.chain, config.spendToken)}&buyToken=${wrap(
+        config.chain,
         config.buyToken,
     )}${op}&slippagePercentage=${config.slippage}`;
 }
@@ -77,8 +77,23 @@ function zxEndpoint(chain: Chain) {
     }
 }
 
-export async function fetchZxSwap(chain: Chain, config: OrderCreationArg): Promise<ZeroXAnswer> {
-    const url = zxQuoteUrl(chain, config);
+export type SwapArgs = {
+    readonly chain: Chain;
+    /** Token you'd like to spend */
+    readonly spendToken: HexString;
+    /** Token you'd like to receive */
+    readonly buyToken: HexString;
+    /**
+     * Accepted slippage (ex: '0.03' means 3% slippage accepted).
+     * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
+     */
+    readonly slippage: number;
+    /** Spent quantity */
+    readonly spendQty: BigNumber;
+};
+
+export async function fetchZxSwap(config: SwapArgs): Promise<ZeroXAnswer> {
+    const url = zxQuoteUrl(config);
     const response = await fetch(url);
     const json = await response.json();
     if (!response.ok) {

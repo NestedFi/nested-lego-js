@@ -19,8 +19,15 @@ export function hexToObject<T>(data: string): T {
     return JSON.parse(w3utils.hexToString(data));
 }
 
+export interface NestedOrder {
+    operator: string;
+    token: HexString;
+    callData: string;
+    commit: boolean;
+}
+
 type RawDataType = 'address' | 'bytes4' | 'bytes' | 'uint256';
-export function buildOrderStruct(operator: string, outToken: HexString, data: [RawDataType, any][]) {
+export function buildOrderStruct(operator: string, outToken: HexString, data: [RawDataType, any][]): NestedOrder {
     const abiCoder = new utils.AbiCoder();
     //  👉 The contract will prepend an address to the call data we have built.
     // ... given that dynamic length parameters are stored in place as pointers
@@ -87,12 +94,12 @@ export function safeMult(bn: BigNumber, ratio: number): BigNumber {
     return bn.mul(ratioWithPrecision).div(factor);
 }
 
-export function removeFees(amt: HexNumber) {
-    return safeMult(BigNumber.from(amt), 1 - FIXED_FEE).toHexString() as HexNumber;
+export function removeFees(amt: BigNumber) {
+    return safeMult(amt, 1 - FIXED_FEE);
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {
-    if (token.toLowerCase() === NATIVE_TOKEN) {
+    if (normalize(token) === NATIVE_TOKEN) {
         const wrapped = defaultContracts[chain].wrappedToken;
         if (!wrapped) {
             throw new Error('Chain not supported: ' + chain);
@@ -100,4 +107,37 @@ export function wrap(chain: Chain, token: HexString): HexString {
         return wrapped;
     }
     return token;
+}
+
+export type Lazy<T> = () => Promise<T>;
+
+export function lazy<T>(ctor: () => Promise<T>): Lazy<T> {
+    let cached: Promise<T>;
+    let retreived = false;
+    return async () => {
+        if (retreived) {
+            return await cached;
+        }
+        cached = ctor();
+        retreived = true;
+        return await cached;
+    };
+}
+
+export type LazySync<T> = () => T;
+export function lazySync<T>(ctor: () => T): LazySync<T> {
+    let cached: T;
+    let retreived = false;
+    return () => {
+        if (retreived) {
+            return cached;
+        }
+        cached = ctor();
+        retreived = true;
+        return cached;
+    };
+}
+
+export function normalize(str: HexString): HexString {
+    return str.toLowerCase() as HexString;
 }

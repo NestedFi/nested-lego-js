@@ -38,3 +38,10 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
         wrappedToken: null,
     },
 };
+
+export const ERC20_ABI = [
+    'function approve(address spender, uint256 amount) external returns (bool)',
+    'function allowance(address owner, address spender) external view returns (uint256)',
+    'function balanceOf(address _owner) external view returns (uint256)',
+    'function decimals() externals view returns (uint8)',
+];

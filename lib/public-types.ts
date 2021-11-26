@@ -1,4 +1,4 @@
-import type { ContractReceipt } from 'ethers';
+import { BigNumber, BigNumberish, Contract, ContractReceipt, Signer, utils } from 'ethers';
 
 export enum Chain {
     eth = 'eth',
@@ -11,20 +11,6 @@ export type HexString = `0x${string}`;
 export type HexNumber = `${'' | '-'}${HexString}`;
 export type ChainAndId = `${Chain}:${number}`;
 
-export type OrderCreationArg = {
-    /** Token you'd like to spend */
-    readonly spendToken: HexString;
-    /** Token you'd like to receive */
-    readonly buyToken: HexString;
-    /**
-     * Accepted slippage (ex: '0.03' means 3% slippage accepted).
-     * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
-     */
-    readonly slippage: number;
-    /** Spent quantity */
-    readonly spendQty: HexNumber;
-};
-
 export interface CreatePortfolioMetadata {
     /** Provide a name for the underlying NFT */
     name?: string;
@@ -36,50 +22,75 @@ export interface CreatePortfolioMetadata {
     originalPortfolioId?: string | number;
 }
 
-export interface INestedContracts {
-    readonly chain: Chain;
+export interface TokenOrder {
+    /** Token you'd like to spend */
+    readonly spendToken: HexString;
+    /** Token you'd like to receive */
+    readonly buyToken: HexString;
+    /**
+     * Accepted slippage (ex: '0.03' means 3% slippage accepted).
+     * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
+     */
+    readonly slippage: number;
+    /** Spent quantity (in spendToken) */
+    readonly spendQty: BigNumber;
+
+    /** Price given by the AMM */
+    readonly price: number;
+    /** Guaranteed price given the AMM */
+    readonly guaranteedPrice: number;
+
+    /** Change the budget allocated to buying this token */
+    changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<void>;
+
+    /** Change the accepted slippage */
+    changeSlippage(slippage: number): PromiseLike<void>;
+
+    /** Refresh quotes */
+    refresh(): PromiseLike<void>;
+
+    /** Remove this token from parent operation */
+    remove(): void;
+}
+
+export interface HasOrders {
+    /** Orders already added to this operation */
+    readonly orders: readonly TokenOrder[];
+}
+
+export interface CanAddTokensOperation extends HasOrders {
+    /** Budget token that will be spent from your wallet */
+    readonly spentToken: HexString;
+
+    /** Total required budget */
+    readonly totalBudget: BigNumber;
 
     /**
-     * Prepare a swap, or an order to transfer a token.
-     * Returns a data structure that you will have to pass to various other methods, like `createPortfolio()`.
+     * Add a new token to this porfolio, with the given budget.
+     * @argument token The token we want to add to this porfolio.
+     * @argument forBudgetAmount How much of the porfolio budget must be allocated to buying this token.
+     * @argument slippage Allowed price slippage (ex: 0.03 means 3% slippage allowed slippage)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    prepareOrder(swap: OrderCreationArg): Promise<Order>;
+    addToken(token: HexString, forBudgetAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+
+    /** Tells if the Nested contracts have enough allowance to spend the required budget token in your name */
+    isApproved(): PromiseLike<boolean>;
 
     /**
-     * Creates a portfolio.
-     * 👉 Only one budget token allowed for all swap orders
-     * 👉 The nested contracts must have an allowance on budget token (see .approve() & .requiresApproval() methods)
+     * Approve the Nested contracts to spent the given input budget
+     * @argument amount (optional) If provided, then only the given amount will be approved (must be >= this.total)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    createPortfolio(orders: Order[], metadata?: CreatePortfolioMetadata): Promise<CreatePortfolioResult>;
+    approve(amount?: BigNumberish): PromiseLike<void>;
+}
 
-    /**
-     * Updates a porfolio, by adding tokens in it.
-     * 👉 Same behaviour as `createPortfolio`, but on an existing porfolio.
-     */
-    addTokenToPortfolio(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
-
-    /**
-     * Swap a single token in portfolio, to multiple tokens (that will stay in porfolio).
-     * 👉 All orders must have the same `spendToken`.
-     * 👉 The portfolio must contain enough budget to perform the given swaps.
-     */
-    swapSingleToMulti(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
-
-    /**
-     * Swap multiple tokens in portfolio, to a single token (that will stay in porfolio).
-     * 👉 All orders must have the same `buyToken`.
-     * 👉 The portfolio must contain enough budget to perform the given swaps.
-     */
-    swapMultiToSingle(portfolioId: HexString | ChainAndId, orders: Order[]): Promise<ContractReceipt>;
-
-    /** Returns your balance of the given ERC20 token (helper function) */
-    balanceOf(tokenAddress: HexString): Promise<HexNumber>;
-
-    /** Tells if the Nested contracts have an allowance to use the given token as an input budget */
-    isApproved(spentToken: HexString, amount: HexNumber): Promise<boolean>;
-
-    /** Approve the Nested contracts to spent the given input budget  */
-    approve(spentToken: HexString, amount?: HexNumber): Promise<void>;
+/** Configure an operation aiming to create a new porfolio */
+export interface PorfolioCreator extends CanAddTokensOperation {
+    /** Perform the operation */
+    execute(): PromiseLike<CreatePortfolioResult>;
 }
 
 export interface CreatePortfolioResult {
@@ -97,15 +108,89 @@ export interface CreatePortfolioResult {
     receipt: ContractReceipt;
 }
 
-export interface Order {
-    /** Argument that created this order */
-    readonly arg: OrderCreationArg;
-    /** Price given by the AMM */
-    readonly price: number;
-    /** Guaranteed price given the AMM */
-    readonly guaranteedPrice: number;
-    /** How much of the spent token will be spent */
-    readonly spentQty: HexNumber;
+/** Configure an operation aiming to add tokens to an existing portfolio, using a budget from your wallet */
+export interface PorfolioTokenAdder extends CanAddTokensOperation {
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
+export interface SingleToMultiSwapper extends HasOrders {
+    /**
+     * Add a new token to this porfolio, with the given budget.
+     * @argument token The token we want to add to this porfolio.
+     * @argument forBudgetAmount How much of the porfolio budget must be allocated to buying this token.
+     * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    swapTo(token: HexString, forBudgetAmount: BigNumberish, slippage?: number): PromiseLike<TokenOrder>;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
+export interface MultiToSingleSwapper extends HasOrders {
+    /**
+     * Sell a given budget of the given token.
+     * @argument sellToken The token we want to sell in this porfolio.
+     * @argument sellTokenAmount How much of the porfolio budget must be allocated to buying this token.
+     * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage?: number): PromiseLike<TokenOrder>;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
+export interface NestedTools {
+    readonly chain: Chain;
+    readonly factoryInterface: utils.Interface;
+    readonly factoryContract: Contract;
+    /** Gets the number of decimals of a given ERC20 token */
+    getErc20Decimals(erc20: HexString): PromiseLike<number>;
+    /** Computes a token amount, fetching token digits & converting it to the right BigNumber if the amount you gave is a number */
+    toTokenAmount(token: HexString, amount: BigNumberish): PromiseLike<BigNumber>;
+    /** Returns your balance of the given ERC20 token */
+    balanceOf(tokenAddress: HexString): PromiseLike<HexNumber>;
+}
+
+export interface INestedContracts {
+    readonly chain: Chain;
+
+    /** Some tools to help you interact directly with Nested Finance contracts on this chain */
+    readonly tools: NestedTools;
+
+    /** Transaction signer (will throw an exception if you did not provide a signer when calling connect()) */
+    readonly signer: Signer;
+
+    /**
+     * Creates a portfolio.
+     * 👉 Only one budget token allowed for all swap orders
+     * 👉 The nested contracts must have an allowance on budget token (see .approve() & .requiresApproval() methods)
+     */
+    createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PorfolioCreator;
+
+    /**
+     * Updates a porfolio, by adding tokens in it, buying them with a single token in your wallet.
+     * 👉 Same behaviour as `createPortfolio`, but on an existing porfolio.
+     */
+    addTokensToPortfolio(portfolioId: HexString | ChainAndId, budgetToken: HexString): PorfolioTokenAdder;
+
+    /**
+     * Swap a single token in portfolio, to multiple tokens (that will stay in porfolio).
+     * 👉 All orders must have the same `spendToken`.
+     * 👉 The portfolio must contain enough budget to perform the given swaps.
+     */
+    swapSingleToMulti(portfolioId: HexString | ChainAndId, tokenToSpend: HexString): SingleToMultiSwapper;
+
+    /**
+     * Swap multiple tokens in portfolio, to a single token (that will stay in porfolio).
+     * 👉 All orders must have the same `buyToken`.
+     * 👉 The portfolio must contain enough budget to perform the given swaps.
+     */
+    swapMultiToSingle(portfolioId: HexString | ChainAndId, tokenToBuy: HexString): MultiToSingleSwapper;
 }
 
 export const ZERO_ADDRESS: HexString = '0x0000000000000000000000000000000000000000';
