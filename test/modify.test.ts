@@ -8,7 +8,7 @@ describe('Modify', () => {
     let instance: INestedContracts;
     let id: HexString;
     before(async () => {
-        instance = connect(await testConfig());
+        instance = await connect(await testConfig());
 
         console.log('📐 Creating a porfolio...');
         // Create a porfolio with 2 tokens in it

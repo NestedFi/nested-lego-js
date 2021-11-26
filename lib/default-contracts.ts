@@ -1,10 +1,11 @@
 import { Networkish } from '@ethersproject/networks';
 import { Chain, HexString } from './public-types';
 
-interface ConnectionConfig {
+export interface ConnectionConfig {
     providerConfig: Networkish;
     wrappedToken: HexString | null;
     factoryAddress: HexString | null;
+    chainId: number | null;
 }
 
 export const FIXED_FEE = 0.01;
@@ -15,29 +16,40 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
         providerConfig: 'homestead',
         factoryAddress: null,
         wrappedToken: null,
+        chainId: null,
     },
     bsc: {
         providerConfig: 'https://bsc-dataseed.binance.org/',
         factoryAddress: null,
         wrappedToken: null,
+        chainId: null,
     },
     avax: {
         providerConfig: 'https://api.avax.network/ext/bc/C/rpc', // chain 43114
         factoryAddress: null,
         wrappedToken: null,
+        chainId: null,
     },
     poly: {
         providerConfig: 'https://polygon-rpc.com', // chain 137
         factoryAddress: '0x5FAAb0e08A93BFA3f6b4bB681bE2377dB3f431Af',
         wrappedToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+        chainId: 137,
     },
     // Ropsten config
     rop: {
         providerConfig: 'ropsten',
         factoryAddress: null,
         wrappedToken: null,
+        chainId: null,
     },
 };
+
+export const chainByChainId: Record<number, Chain> = Object.fromEntries(
+    Object.entries(defaultContracts)
+        .filter(([_, { chainId }]) => !!chainId)
+        .map(([chain, { chainId }]) => [chainId, chain]),
+);
 
 export const ERC20_ABI = [
     'function approve(address spender, uint256 amount) external returns (bool)',

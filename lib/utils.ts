@@ -3,8 +3,8 @@ import w3utils from 'web3-utils';
 import { defaultContracts, FIXED_FEE } from './default-contracts';
 import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
 
-export function unreachable(value: never): Error {
-    return new Error('Value was supposed to be unreachable' + value);
+export function unreachable(value: never, message?: string): Error {
+    return new Error(message ? message : 'Value was supposed to be unreachable' + value);
 }
 
 export function toBytes32(data: string) {

@@ -97,7 +97,8 @@ export async function fetchZxSwap(config: SwapArgs): Promise<ZeroXAnswer> {
     const response = await fetch(url);
     const json = await response.json();
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${url} (${response.status})`);
+        const error = json?.validationErrors?.[0].reason || 'Unkonwn error';
+        throw new Error(`Failed to fetch 0x quote: ${error} while fetching ${url} (${response.status})`);
     }
     return json;
 }
