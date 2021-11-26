@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, Contract, ContractReceipt, Signer, utils } from 'ethers';
+import { BigNumber, BigNumberish, Contract, ContractReceipt, providers, Signer, utils } from 'ethers';
 
 export enum Chain {
     eth = 'eth',
@@ -20,6 +20,15 @@ export interface CreatePortfolioMetadata {
      * Provide it with its chain-qualified name (ex: 'avax:123'), or its raw ID on the current chain (ex: 123)
      */
     originalPortfolioId?: string | number;
+}
+
+export interface CallData {
+    /** Contract to call (= address of the NestedFactory contract) */
+    to: HexString;
+    /** Call data to send */
+    data: HexString;
+    /** Value that must be sent as native token */
+    value?: BigNumber;
 }
 
 export interface TokenOrder {
@@ -89,6 +98,9 @@ export interface CanAddTokensOperation extends HasOrders {
 
 /** Configure an operation aiming to create a new porfolio */
 export interface PorfolioCreator extends CanAddTokensOperation {
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
+
     /** Perform the operation */
     execute(): PromiseLike<CreatePortfolioResult>;
 }
@@ -110,11 +122,17 @@ export interface CreatePortfolioResult {
 
 /** Configure an operation aiming to add tokens to an existing portfolio, using a budget from your wallet */
 export interface PorfolioTokenAdder extends CanAddTokensOperation {
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
+
     /** Perform the operation */
     execute(): PromiseLike<ContractReceipt>;
 }
 
 export interface SingleToMultiSwapper extends HasOrders {
+    /** Budget token in your porfolio that will be swapped to another token */
+    readonly spentToken: HexString;
+
     /**
      * Add a new token to this porfolio, with the given budget.
      * @argument token The token we want to add to this porfolio.
@@ -123,7 +141,10 @@ export interface SingleToMultiSwapper extends HasOrders {
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    swapTo(token: HexString, forBudgetAmount: BigNumberish, slippage?: number): PromiseLike<TokenOrder>;
+    swapTo(token: HexString, forBudgetAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
 
     /** Perform the operation */
     execute(): PromiseLike<ContractReceipt>;
@@ -138,22 +159,29 @@ export interface MultiToSingleSwapper extends HasOrders {
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage?: number): PromiseLike<TokenOrder>;
+    swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
 
     /** Perform the operation */
     execute(): PromiseLike<ContractReceipt>;
 }
 
+export type NftEventType = 'NftCreated' | 'NftUpdated' | 'NftBurned';
 export interface NestedTools {
     readonly chain: Chain;
     readonly factoryInterface: utils.Interface;
     readonly factoryContract: Contract;
+    readonly provider: providers.Provider;
     /** Gets the number of decimals of a given ERC20 token */
     getErc20Decimals(erc20: HexString): PromiseLike<number>;
     /** Computes a token amount, fetching token digits & converting it to the right BigNumber if the amount you gave is a number */
     toTokenAmount(token: HexString, amount: BigNumberish): PromiseLike<BigNumber>;
     /** Returns your balance of the given ERC20 token */
     balanceOf(tokenAddress: HexString): PromiseLike<HexNumber>;
+    /** Reads a transaction receipt logs, to infer some info about the NFT that has been created in this transaction */
+    readTransactionLogs(receipt: providers.TransactionReceipt, operationType: NftEventType): CreatePortfolioResult;
 }
 
 export interface INestedContracts {

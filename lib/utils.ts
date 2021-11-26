@@ -1,4 +1,4 @@
-import { BigNumber, utils } from 'ethers';
+import { BigNumber, Signer, utils } from 'ethers';
 import w3utils from 'web3-utils';
 import { defaultContracts, FIXED_FEE } from './default-contracts';
 import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
@@ -140,4 +140,11 @@ export function lazySync<T>(ctor: () => T): LazySync<T> {
 
 export function normalize(str: HexString): HexString {
     return str.toLowerCase() as HexString;
+}
+
+export function checkHasSigner(signer: Signer | undefined): Signer {
+    if (!signer) {
+        throw new Error('No signer available. Please provide a signer when calling connect()');
+    }
+    return signer!;
 }

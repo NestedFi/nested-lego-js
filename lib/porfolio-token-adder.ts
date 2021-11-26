@@ -1,7 +1,9 @@
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers } from 'ethers';
 import { ERC20_ABI } from './default-contracts';
+import { HasOrdersImpl } from './has-horders';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
+    CallData,
     CanAddTokensOperation,
     HexString,
     INestedContracts,
@@ -12,42 +14,26 @@ import {
 import { TokenOrderImpl } from './token-order';
 import { lazySync, NestedOrder } from './utils';
 
-export abstract class PorfolioTokenAdderBase implements CanAddTokensOperation, _HasOrder {
-    protected _orders: _TokenOrder[] = [];
-    _contractOrder!: NestedOrder;
-
-    protected get _ordersData(): NestedOrder[] {
-        return this._orders.map(x => x._contractOrder);
-    }
-
-    get orders(): readonly TokenOrder[] {
-        return this._orders;
-    }
-
-    get totalBudget(): BigNumber {
-        return this.orders.reduce((a, b) => a.add(BigNumber.from(b)), BigNumber.from(0));
-    }
-
+export abstract class PorfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));
 
-    get tools() {
-        return this.parent.tools;
-    }
-
-    constructor(protected parent: INestedContracts, readonly spentToken: HexString) {}
-
-    _removeOrder(order: _TokenOrder) {
-        const i = this._orders.indexOf(order);
-        this._orders.splice(i, 1);
+    constructor(parent: INestedContracts, readonly spentToken: HexString) {
+        super(parent);
     }
 
     async isApproved(): Promise<boolean> {
+        if (this.spentToken === NATIVE_TOKEN) {
+            return true;
+        }
         const user = await this.parent.signer.getAddress();
         const allowance = await this.tokenContract().allowance(user, this.tools.factoryContract.address);
         return allowance.gte(BigNumber.from(this.totalBudget));
     }
 
     async approve(amount?: BigNumberish): Promise<void> {
+        if (this.spentToken === NATIVE_TOKEN) {
+            return;
+        }
         const toApprove = amount ? await this.toBudget(amount) : ethers.constants.MaxUint256;
         await this.tokenContract().approve(this.tools.factoryContract.address, toApprove);
     }
@@ -57,28 +43,35 @@ export abstract class PorfolioTokenAdderBase implements CanAddTokensOperation, _
     }
 
     async addToken(token: HexString, forBudgetAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
-        const amt = new TokenOrderImpl(this, this.spentToken, token, slippage, true);
-        await amt.changeBudgetAmount(forBudgetAmount);
-        return amt;
+        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, true);
+        await ret.changeBudgetAmount(forBudgetAmount);
+        this._orders.push(ret);
+        return ret;
     }
 }
 
 export class PorfolioTokenAdderImpl extends PorfolioTokenAdderBase implements PorfolioTokenAdder {
     nftId!: BigNumber;
 
+    buildCallData(): CallData {
+        const total = this.totalBudget;
+        return {
+            to: this.parent.tools.factoryContract.address as HexString,
+            data: this.parent.tools.factoryInterface.encodeFunctionData('addTokens', [
+                this.nftId,
+                this.spentToken,
+                total,
+                this._ordersData,
+            ]) as HexString,
+            // compute how much native token we need as input:
+            value: this.spentToken === NATIVE_TOKEN ? total : BigNumber.from(0),
+        };
+    }
+
     async execute(): Promise<ethers.ContractReceipt> {
         // actual transaction
-        const total = this.totalBudget;
-        const tx: ContractTransaction = await this.parent.tools.factoryContract.addTokens(
-            this.nftId,
-            this.spentToken,
-            total,
-            this._ordersData,
-            {
-                // compute how much native token we need as input:
-                value: this.spentToken === NATIVE_TOKEN ? total : 0,
-            },
-        );
+        const callData = this.buildCallData();
+        const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;
     }

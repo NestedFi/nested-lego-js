@@ -5,6 +5,7 @@ import { Networkish } from '@ethersproject/networks';
 import { defaultContracts } from './default-contracts';
 import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
+import { ChainTools } from './chain-tools';
 
 export interface NestedConnection {
     /** Which chain are we connecting to ? */
@@ -33,7 +34,8 @@ export function connect(_opts: NestedConnection): INestedContracts {
     }
 
     // return instance
-    return new NestedContractsInstance(chain, nestedFactory, nestedFactoryInterface, signer);
+    const tools = new ChainTools(chain, signer, provider, nestedFactoryInterface, nestedFactory);
+    return new NestedContractsInstance(chain, tools, signer);
 }
 
 function normalizeConfig(_opts: NestedConnection): {

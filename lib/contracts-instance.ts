@@ -8,19 +8,18 @@ import {
     PorfolioTokenAdder,
     SingleToMultiSwapper,
 } from './public-types';
-import { normalize, wrap } from './utils';
+import { checkHasSigner, normalize, wrap } from './utils';
 import { BigNumber, ContractReceipt, ContractTransaction, Signer } from 'ethers';
 import { PorfolioCreatorImpl } from './porfolio-creator';
 import { PorfolioTokenAdderImpl } from './porfolio-token-adder';
+import { SingleToMultiSwapperImpl } from './porfolio-single-to-multi-swapper';
+import { MultiToSingleSwapperImpl } from './porfolio-multi-to-single-swapper';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
 
     get signer() {
-        if (!this._signer) {
-            throw new Error('No signer available. Please provide a signer when calling connect()');
-        }
-        return this._signer!;
+        return checkHasSigner(this._signer);
     }
 
     createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PorfolioCreator {
@@ -37,38 +36,15 @@ export class NestedContractsInstance implements INestedContracts {
     }
 
     swapSingleToMulti(portfolioId: HexString | ChainAndId, tokenToSpend: HexString): SingleToMultiSwapper {
-        // token transfers are not valid for this method => filter them out.
-        orders = orders.filter(o => normalize(o.arg.buyToken) !== normalize(o.arg.spendToken));
-
-        // infer spent token
-        const { spentToken, total } = this._singleSpentToken(orders);
-        const ordersData = this._extractOrders(orders);
-
         // infer the token ID
-        let nftId: BigNumber = this._inferNftId(portfolioId);
-
-        // actual transaction
-        const tx: ContractTransaction = await this.factory.swapTokenForTokens(nftId, spentToken, total, ordersData);
-        const receipt = await tx.wait();
-        return receipt;
+        const nftId: BigNumber = this._inferNftId(portfolioId);
+        return new SingleToMultiSwapperImpl(this, nftId, normalize(tokenToSpend));
     }
 
     swapMultiToSingle(portfolioId: HexString | ChainAndId, tokenToBuy: HexString): MultiToSingleSwapper {
-        // token transfers are not valid for this method => filter them out.
-        orders = orders.filter(o => normalzie(o.arg.buyToken) !== normalize(o.arg.spendToken));
-
-        // infer bought token
-        const boughtToken = wrap(this.chain, this._singleBoughtToken(orders));
-        const ordersData = this._extractOrders(orders);
-        const soldAmounts = orders.map(x => BigNumber.from(x.spentQty));
-
         // infer the token ID
-        let nftId: BigNumber = this._inferNftId(portfolioId);
-
-        // actual transaction
-        const tx: ContractTransaction = await this.factory.sellTokensToNft(nftId, boughtToken, soldAmounts, ordersData);
-        const receipt = await tx.wait();
-        return receipt;
+        const nftId: BigNumber = this._inferNftId(portfolioId);
+        return new MultiToSingleSwapperImpl(this, nftId, normalize(tokenToBuy));
     }
 
     /** Infer the related NFT id, and throw an error if not on the right chain */

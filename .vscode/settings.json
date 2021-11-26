@@ -4,7 +4,7 @@
     "mochaExplorer.cwd": ".",
     "mochaExplorer.debuggerPort": 9567,
     "mochaExplorer.envPath": ".env",
-    "mochaExplorer.timeout": 200000,
+    "mochaExplorer.timeout": 2000000,
     "mochaExplorer.debuggerConfig": "Debug Mocha Tests",
     "typescript.tsdk": "node_modules/typescript/lib",
     "files.exclude": {
