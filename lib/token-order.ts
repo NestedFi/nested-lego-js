@@ -1,6 +1,5 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString } from '.';
-import { fetchZxSwap } from './0x';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { buildOrderStruct, NestedOrder, normalize, removeFees, wrap } from './utils';
 
@@ -75,11 +74,11 @@ export class TokenOrderImpl implements _TokenOrder {
 
     private async _prepare0xSwap(): Promise<void> {
         // build the 0x swap order
-        const zxQuote = await fetchZxSwap({
+        const zxQuote = await this.parent.tools.fetch0xSwap({
             chain: this.chain,
-            buyToken: this.buyToken,
             slippage: this.slippage,
-            spendToken: this.spendToken,
+            spendToken: wrap(this.chain, this.spendToken),
+            buyToken: wrap(this.chain, this.buyToken),
             // remove fee from the input amount
             spendQty: this.spendQtyWithoutFees,
         });

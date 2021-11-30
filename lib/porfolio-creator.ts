@@ -1,16 +1,16 @@
 import { BigNumber, ContractTransaction, providers } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
-import { PorfolioTokenAdderBase } from './porfolio-token-adder';
+import { PortfolioTokenAdderBase } from './porfolio-token-adder';
 import {
     CallData,
     CreatePortfolioMetadata,
     CreatePortfolioResult,
     HexString,
     NATIVE_TOKEN,
-    PorfolioCreator,
+    PortfolioCreator,
 } from './public-types';
 
-export class PorfolioCreatorImpl extends PorfolioTokenAdderBase implements PorfolioCreator {
+export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements PortfolioCreator {
     metadata?: CreatePortfolioMetadata;
 
     buildCallData(): CallData {

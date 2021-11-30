@@ -1,4 +1,5 @@
 import { BigNumber, BigNumberish, Contract, ContractReceipt, providers, Signer, utils } from 'ethers';
+import { ZeroExRequest, ZeroXAnswer } from '.';
 
 export enum Chain {
     eth = 'eth',
@@ -75,9 +76,9 @@ export interface CanAddTokensOperation extends HasOrders {
     readonly totalBudget: BigNumber;
 
     /**
-     * Add a new token to this porfolio, with the given budget.
-     * @argument token The token we want to add to this porfolio.
-     * @argument forBudgetAmount How much of the porfolio budget must be allocated to buying this token.
+     * Add a new token to this portfolio, with the given budget.
+     * @argument token The token we want to add to this portfolio.
+     * @argument forBudgetAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (ex: 0.03 means 3% slippage allowed slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
@@ -96,8 +97,8 @@ export interface CanAddTokensOperation extends HasOrders {
     approve(amount?: BigNumberish): PromiseLike<void>;
 }
 
-/** Configure an operation aiming to create a new porfolio */
-export interface PorfolioCreator extends CanAddTokensOperation {
+/** Configure an operation aiming to create a new portfolio */
+export interface PortfolioCreator extends CanAddTokensOperation {
     /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
     buildCallData(): CallData;
 
@@ -106,22 +107,59 @@ export interface PorfolioCreator extends CanAddTokensOperation {
 }
 
 export interface CreatePortfolioResult {
-    /** A porfolio identifier, unique accross all chains (identifier used by Nested.finance to identify porfolios)  */
+    /** A portfolio identifier, unique accross all chains (identifier used by Nested.finance to identify portfolios)  */
     id: ChainAndId;
     /** The portfolio ID (unique in the given chain) */
     idInChain: HexString;
-    /** The chain this porfolio is on (just as a reminder) */
+    /** The chain this portfolio is on (just as a reminder) */
     chain: Chain;
-    /** A private URL that can be used to display this porfolio on Nested.finance (requires to be connected with the owner's wallet) */
+    /** A private URL that can be used to display this portfolio on Nested.finance (requires to be connected with the owner's wallet) */
     privateUrl: string;
-    /** A public URL that can be used to show off this porfolio on Nested.finance */
+    /** A public URL that can be used to show off this portfolio on Nested.finance */
     publicUrl: string;
     /** Transaction receipt */
     receipt: ContractReceipt;
 }
 
 /** Configure an operation aiming to add tokens to an existing portfolio, using a budget from your wallet */
-export interface PorfolioTokenAdder extends CanAddTokensOperation {
+export interface PortfolioTokenAdder extends CanAddTokensOperation {
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
+export type TokenLiquidator = Omit<TokenOrder, 'changeBudgetAmount' | 'remove'>;
+
+export interface PortfolioLiquidator {
+    /** Budget token that will be spent from your wallet */
+    readonly receivedToken: HexString;
+
+    /** Refresh the assets to be liquidated, in order to have a preview of what you will receive */
+    refreshAssets(): PromiseLike<readonly TokenLiquidator[]>;
+
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
+export interface PortfolioSeller extends HasOrders {
+    /** Budget token that will be spent from your wallet */
+    readonly receivedToken: HexString;
+
+    /**
+     * Add a new token to this portfolio, with the given budget.
+     * @argument token The token we want to add to this portfolio.
+     * @argument amountToSell How much of the given token must be sold to portfolio
+     * @argument slippage Allowed price slippage (ex: 0.03 means 3% slippage allowed slippage)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    sellToken(token: HexString, amountToSell: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+
     /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
     buildCallData(): CallData;
 
@@ -130,13 +168,13 @@ export interface PorfolioTokenAdder extends CanAddTokensOperation {
 }
 
 export interface SingleToMultiSwapper extends HasOrders {
-    /** Budget token in your porfolio that will be swapped to another token */
+    /** Budget token in your portfolio that will be swapped to another token */
     readonly spentToken: HexString;
 
     /**
-     * Add a new token to this porfolio, with the given budget.
-     * @argument token The token we want to add to this porfolio.
-     * @argument forBudgetAmount How much of the porfolio budget must be allocated to buying this token.
+     * Add a new token to this portfolio, with the given budget.
+     * @argument token The token we want to add to this portfolio.
+     * @argument forBudgetAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
@@ -153,8 +191,8 @@ export interface SingleToMultiSwapper extends HasOrders {
 export interface MultiToSingleSwapper extends HasOrders {
     /**
      * Sell a given budget of the given token.
-     * @argument sellToken The token we want to sell in this porfolio.
-     * @argument sellTokenAmount How much of the porfolio budget must be allocated to buying this token.
+     * @argument sellToken The token we want to sell in this portfolio.
+     * @argument sellTokenAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
@@ -168,6 +206,11 @@ export interface MultiToSingleSwapper extends HasOrders {
     execute(): PromiseLike<ContractReceipt>;
 }
 
+export interface Holding {
+    readonly token: HexString;
+    readonly amount: BigNumber;
+}
+
 export type NftEventType = 'NftCreated' | 'NftUpdated' | 'NftBurned';
 export interface NestedTools {
     readonly chain: Chain;
@@ -179,9 +222,13 @@ export interface NestedTools {
     /** Computes a token amount, fetching token digits & converting it to the right BigNumber if the amount you gave is a number */
     toTokenAmount(token: HexString, amount: BigNumberish): PromiseLike<BigNumber>;
     /** Returns your balance of the given ERC20 token */
-    balanceOf(tokenAddress: HexString): PromiseLike<HexNumber>;
+    balanceOf(tokenAddress: HexString): PromiseLike<BigNumber>;
     /** Reads a transaction receipt logs, to infer some info about the NFT that has been created in this transaction */
     readTransactionLogs(receipt: providers.TransactionReceipt, operationType: NftEventType): CreatePortfolioResult;
+    // /** Gets the NestedRecords contract */
+    recordsContract(): Promise<Contract>;
+    /** Fetch a quote from 0x */
+    fetch0xSwap(request: ZeroExRequest): Promise<ZeroXAnswer>;
 }
 
 export interface INestedContracts {
@@ -198,28 +245,48 @@ export interface INestedContracts {
      * 👉 Only one budget token allowed for all swap orders
      * 👉 The nested contracts must have an allowance on budget token (see .approve() & .requiresApproval() methods)
      */
-    createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PorfolioCreator;
+    createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PortfolioCreator;
 
     /**
-     * Updates a porfolio, by adding tokens in it, buying them with a single token in your wallet.
-     * 👉 Same behaviour as `createPortfolio`, but on an existing porfolio.
+     * Updates a portfolio, by adding tokens in it, buying them with a single token in your wallet.
+     * 👉 Same behaviour as `createPortfolio`, but on an existing portfolio.
      */
-    addTokensToPortfolio(portfolioId: HexString | ChainAndId, budgetToken: HexString): PorfolioTokenAdder;
+    addTokensToPortfolio(portfolioId: PortfolioIdIsh, budgetToken: HexString): PortfolioTokenAdder;
 
     /**
-     * Swap a single token in portfolio, to multiple tokens (that will stay in porfolio).
+     * Swap a single token in portfolio, to multiple tokens (that will stay in portfolio).
      * 👉 All orders must have the same `spendToken`.
      * 👉 The portfolio must contain enough budget to perform the given swaps.
      */
-    swapSingleToMulti(portfolioId: HexString | ChainAndId, tokenToSpend: HexString): SingleToMultiSwapper;
+    swapSingleToMulti(portfolioId: PortfolioIdIsh, tokenToSpend: HexString): SingleToMultiSwapper;
 
     /**
-     * Swap multiple tokens in portfolio, to a single token (that will stay in porfolio).
+     * Swap multiple tokens in portfolio, to a single token (that will stay in portfolio).
      * 👉 All orders must have the same `buyToken`.
      * 👉 The portfolio must contain enough budget to perform the given swaps.
      */
-    swapMultiToSingle(portfolioId: HexString | ChainAndId, tokenToBuy: HexString): MultiToSingleSwapper;
+    swapMultiToSingle(portfolioId: PortfolioIdIsh, tokenToBuy: HexString): MultiToSingleSwapper;
+
+    /**
+     * Sell all assets in portfolio to wallet & burns the associated NFT
+     * @argument portfolioId The portfolio to liquidate
+     * @argument tokenToReceive The token you will receive on your wallet
+     * @argument slippage Default slippage to sell all assets (can be customized asset-by-asset, see PortfolioLiquidator -> refreshAssets -> setSlippage)
+     */
+    liquidateToWalletAndDestroy(
+        portfolioId: PortfolioIdIsh,
+        tokenToReceive: HexString,
+        slippage: number,
+    ): PortfolioLiquidator;
+
+    /** Sell some tokens in portfolio to wallet */
+    sellTokensToWallet(portfolioId: PortfolioIdIsh, tokenToReceive: HexString): PortfolioSeller;
+
+    /** Get assets in portfolio */
+    getAssets(portfolioId: PortfolioIdIsh): Promise<Holding[]>;
 }
+
+export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;
 
 export const ZERO_ADDRESS: HexString = '0x0000000000000000000000000000000000000000';
 export const NATIVE_TOKEN: HexString = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';

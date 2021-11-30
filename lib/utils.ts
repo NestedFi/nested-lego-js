@@ -1,5 +1,5 @@
 import { BigNumber, Signer, utils } from 'ethers';
-import w3utils from 'web3-utils';
+import w3utils, { isBigNumber } from 'web3-utils';
 import { defaultContracts, FIXED_FEE } from './default-contracts';
 import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
 
@@ -99,12 +99,13 @@ export function removeFees(amt: BigNumber) {
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {
-    if (normalize(token) === NATIVE_TOKEN) {
+    token = normalize(token);
+    if (token === NATIVE_TOKEN) {
         const wrapped = defaultContracts[chain].wrappedToken;
         if (!wrapped) {
             throw new Error('Chain not supported: ' + chain);
         }
-        return wrapped;
+        return normalize(wrapped);
     }
     return token;
 }
@@ -147,4 +148,8 @@ export function checkHasSigner(signer: Signer | undefined): Signer {
         throw new Error('No signer available. Please provide a signer when calling connect()');
     }
     return signer!;
+}
+
+export function isBigNumberTyped(value: any): value is BigNumber {
+    return isBigNumber(value);
 }

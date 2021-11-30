@@ -32,7 +32,7 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
     },
     poly: {
         providerConfig: 'https://polygon-rpc.com', // chain 137
-        factoryAddress: '0x5FAAb0e08A93BFA3f6b4bB681bE2377dB3f431Af',
+        factoryAddress: '0xfEDc04397A9cd49f48815DF2D3b991C0c6398A96',
         wrappedToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         chainId: 137,
     },

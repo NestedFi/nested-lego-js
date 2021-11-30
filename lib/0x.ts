@@ -3,8 +3,10 @@ import { Chain, HexString } from './public-types';
 import { unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 
+export type ZeroExFetcher = (request: ZeroExRequest) => Promise<ZeroXAnswer>;
+
 /** 0x answer will have this shape */
-interface ZeroXAnswer {
+export interface ZeroXAnswer {
     chainId: number;
     price: string;
     guaranteedPrice: string;
@@ -46,16 +48,13 @@ interface ZeroXAnswer {
     buyTokenToEthRate: string;
 }
 
-function zxQuoteUrl(config: SwapArgs): string {
+function zxQuoteUrl(config: ZeroExRequest): string {
     const endpoint = zxEndpoint(config.chain);
 
     // Wana enrich this api with a buy amount instead of sell ?
     //   👉  `&buyAmount=${BigNumber.from(config.buyQty)}`;
     const op = `&sellAmount=${BigNumber.from(config.spendQty)}`;
-    return `${endpoint}swap/v1/quote?sellToken=${wrap(config.chain, config.spendToken)}&buyToken=${wrap(
-        config.chain,
-        config.buyToken,
-    )}${op}&slippagePercentage=${config.slippage}`;
+    return `${endpoint}swap/v1/quote?sellToken=${config.spendToken}&buyToken=${config.buyToken}${op}&slippagePercentage=${config.slippage}`;
 }
 
 function zxEndpoint(chain: Chain) {
@@ -77,7 +76,7 @@ function zxEndpoint(chain: Chain) {
     }
 }
 
-export type SwapArgs = {
+export interface ZeroExRequest {
     readonly chain: Chain;
     /** Token you'd like to spend */
     readonly spendToken: HexString;
@@ -90,9 +89,9 @@ export type SwapArgs = {
     readonly slippage: number;
     /** Spent quantity */
     readonly spendQty: BigNumber;
-};
+}
 
-export async function fetchZxSwap(config: SwapArgs): Promise<ZeroXAnswer> {
+export async function defaultZeroExFetcher(config: ZeroExRequest): Promise<ZeroXAnswer> {
     const url = zxQuoteUrl(config);
     const response = await fetch(url);
     const json = await response.json();

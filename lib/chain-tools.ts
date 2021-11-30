@@ -1,18 +1,25 @@
 import { BigNumber, BigNumberish, Contract, providers, Signer, utils } from 'ethers';
 import { CreatePortfolioResult, HexNumber, HexString, NestedTools, NftEventType } from './public-types';
 import { ERC20_ABI } from './default-contracts';
-import { checkHasSigner, normalize } from './utils';
-import { Chain } from '.';
+import { checkHasSigner, lazy, normalize, wrap } from './utils';
+import { Chain, ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from '.';
+import recordsAbi from './nested-records.json';
 
 const decimals = new Map<string, Promise<number>>();
 
 export class ChainTools implements NestedTools {
+    recordsContract = lazy(async () => {
+        const recordsAddress = await this.factoryContract.nestedRecords();
+        return new Contract(recordsAddress, recordsAbi, this.provider);
+    });
+
     constructor(
         readonly chain: Chain,
         private signer: Signer | undefined,
         readonly provider: providers.Provider,
         readonly factoryInterface: utils.Interface,
         readonly factoryContract: Contract,
+        readonly fetch0xSwap: ZeroExFetcher,
     ) {}
 
     getErc20Decimals(erc20: HexString): Promise<number> {
@@ -41,11 +48,11 @@ export class ChainTools implements NestedTools {
         return utils.parseUnits(amount.toString(), decimals);
     }
 
-    async balanceOf(token: HexString): Promise<HexNumber> {
+    async balanceOf(token: HexString): Promise<BigNumber> {
         const user = await checkHasSigner(this.signer).getAddress();
         const contract = await new Contract(token, ERC20_ABI, this.provider);
         const balance = (await contract.balanceOf(user)) as BigNumber;
-        return balance.toHexString() as HexNumber;
+        return balance;
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */

@@ -4,7 +4,7 @@ import { INestedContracts, MultiToSingleSwapper } from '.';
 import { HasOrdersImpl } from './has-horders';
 import { CallData, HexString, SingleToMultiSwapper, TokenOrder } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { normalize } from './utils';
+import { normalize, wrap } from './utils';
 
 export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSingleSwapper {
     constructor(parent: INestedContracts, private nftId: BigNumberish, readonly toToken: HexString) {
@@ -12,7 +12,7 @@ export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSi
     }
 
     async swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
-        sellToken = normalize(sellToken);
+        sellToken = wrap(this.parent.chain, sellToken);
         if (sellToken === this.toToken) {
             throw new Error('You cannot swap a token to itself');
         }
@@ -24,6 +24,9 @@ export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSi
 
     buildCallData(): CallData {
         const soldAmounts = this._orders.map(x => x.spendQty);
+        if (!soldAmounts.length) {
+            throw new Error('Nothing to swap');
+        }
         return {
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('sellTokensToNft', [

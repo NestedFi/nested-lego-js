@@ -29,9 +29,7 @@ describe('Create', () => {
 
         // check that USDC has been spent
         const afterSpent = await instance.tools.balanceOf(poly_usdc.contract);
-        assert.isString(beforeSpent);
-        assert.isString(afterSpent);
-        expect(beforeSpent).not.to.be.equal(afterSpent, 'Should have spent USDC');
+        expect(beforeSpent.toHexString()).not.to.be.equal(afterSpent.toHexString(), 'Should have spent USDC');
     });
 
     it('porfolio without swap', async () => {

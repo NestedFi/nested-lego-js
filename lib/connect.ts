@@ -7,6 +7,7 @@ import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
 import { ChainTools } from './chain-tools';
 import { unreachable } from './utils';
+import { defaultZeroExFetcher, ZeroExFetcher, ZeroXAnswer } from './0x';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -18,6 +19,12 @@ type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;
 export type NestedConnection = {
     /** Specific a version of Nested factory contract */
     contract?: HexString;
+    /**
+     * Provide a custom 0x fetcher (optional)
+     *
+     * nb: The default fetcher is rate-limited to avoid hitting 0x api limits, and implements a backoff retry policy (retries 3 times)
+     */
+    zeroExFetcher?: ZeroExFetcher;
 } & (
     | {
           /** Which chain are we connecting to ? */
@@ -46,7 +53,7 @@ export type NestedConnection = {
 );
 
 export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<INestedContracts> {
-    let { chain, factoryAddress, provider, signer } = await readConfig(_opts);
+    let { chain, factoryAddress, provider, signer, zeroExFetcher } = await readConfig(_opts);
 
     // build contracts
     let nestedFactory = new ethers.Contract(factoryAddress, factoryAbi, provider);
@@ -57,13 +64,14 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
     }
 
     // return instance
-    const tools = new ChainTools(chain, signer, provider, nestedFactoryInterface, nestedFactory);
+    const tools = new ChainTools(chain, signer, provider, nestedFactoryInterface, nestedFactory, zeroExFetcher);
     return new NestedContractsInstance(chain, tools, signer);
 }
 
 async function readConfig(_opts: NestedConnection): Promise<{
     factoryAddress: HexString;
     chain: Chain;
+    zeroExFetcher: ZeroExFetcher;
     signer?: ethers.Signer;
     provider: ethers.providers.Provider;
 }> {
@@ -115,5 +123,6 @@ async function readConfig(_opts: NestedConnection): Promise<{
         signer,
         factoryAddress,
         provider,
+        zeroExFetcher: _opts.zeroExFetcher ?? defaultZeroExFetcher,
     } as const;
 }

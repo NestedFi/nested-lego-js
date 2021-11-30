@@ -8,13 +8,13 @@ import {
     HexString,
     INestedContracts,
     NATIVE_TOKEN,
-    PorfolioTokenAdder,
+    PortfolioTokenAdder,
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { lazySync, NestedOrder } from './utils';
+import { lazySync, NestedOrder, normalize, wrap } from './utils';
 
-export abstract class PorfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
+export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));
 
     constructor(parent: INestedContracts, readonly spentToken: HexString) {
@@ -35,7 +35,11 @@ export abstract class PorfolioTokenAdderBase extends HasOrdersImpl implements Ca
             return;
         }
         const toApprove = amount ? await this.toBudget(amount) : ethers.constants.MaxUint256;
-        await this.tokenContract().approve(this.tools.factoryContract.address, toApprove);
+        const tx: ContractTransaction = await this.tokenContract().approve(
+            this.tools.factoryContract.address,
+            toApprove,
+        );
+        await tx.wait();
     }
 
     private toBudget(amt: BigNumberish) {
@@ -50,11 +54,14 @@ export abstract class PorfolioTokenAdderBase extends HasOrdersImpl implements Ca
     }
 }
 
-export class PorfolioTokenAdderImpl extends PorfolioTokenAdderBase implements PorfolioTokenAdder {
+export class PortfolioTokenAdderImpl extends PortfolioTokenAdderBase implements PortfolioTokenAdder {
     nftId!: BigNumber;
 
     buildCallData(): CallData {
         const total = this.totalBudget;
+        if (total.isNegative() || total.isZero()) {
+            throw new Error('No valid order in operation');
+        }
         return {
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('addTokens', [
