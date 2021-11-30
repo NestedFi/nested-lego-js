@@ -5,7 +5,7 @@ import { native_token, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from '
 
 describe('Create', () => {
     let instance: INestedContracts;
-    before(async () => {
+    beforeEach(async () => {
         instance = await connect(await testConfig());
     });
     async function approve(add: CanAddTokensOperation) {

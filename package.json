@@ -1,11 +1,13 @@
 {
-    "name": "nested-lego-js",
-    "version": "1.0.0",
+    "name": "@nested-finance/lego-contracts",
+    "version": "0.1.1",
     "main": "index.js",
     "license": "MIT",
+    "repository": "https://github.com/NestedFinance/nested-lego-js",
     "scripts": {
         "prepare": "husky install",
-        "build": "rm -rf dist && tsc  --project tsconfig.json",
+        "build": "rm -rf dist && tsc --project tsconfig.json && cp package.json dist/package.json && cp README.md dist/README.md",
+        "release": "npm build && cd dist && npm publish --access public --ignore-scripts",
         "typecheck": "tsc --project tsconfig.json --noEmit"
     },
     "engines": {

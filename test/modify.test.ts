@@ -7,7 +7,9 @@ import { BigNumber } from '@ethersproject/bignumber';
 describe('Modify', () => {
     let instance: INestedContracts;
     let id: HexString;
-    before(async () => {
+    let sushiQty: BigNumber;
+    let nativeQty: BigNumber;
+    beforeEach(async () => {
         instance = await connect(await testConfig());
 
         console.log('📐 Creating a portfolio...');
@@ -19,6 +21,9 @@ describe('Modify', () => {
         const { idInChain } = await ptf.execute();
         assert.isString(idInChain);
         id = idInChain;
+        const assets = await instance.getAssets(idInChain);
+        sushiQty = assets.find(x => x.token === poly_sushi.contract)!.amount;
+        nativeQty = assets.find(x => x.token === native_token.contract)!.amount;
         console.log('👉 Starting test...');
     });
 
@@ -43,7 +48,7 @@ describe('Modify', () => {
         await ptf.swapTo(
             poly_usdc.contract,
             // only convert half of the ptf MATIC
-            BigNumber.from(native_token.smallAmount).div(2),
+            nativeQty.div(2),
             TEST_SLIPPAGE,
         );
         await ptf.execute();
@@ -55,13 +60,13 @@ describe('Modify', () => {
         await ptf.swapFrom(
             poly_sushi.contract,
             // only convert half of the ptf SUSHI
-            BigNumber.from(poly_sushi.smallAmount).div(2),
+            sushiQty.div(2),
             TEST_SLIPPAGE,
         );
         await ptf.swapFrom(
             native_token.contract,
-            // only convert half of the ptf SUSHI
-            BigNumber.from(native_token.smallAmount).div(2),
+            // only convert half of the ptf MATIC
+            nativeQty.div(2),
             TEST_SLIPPAGE,
         );
         await ptf.execute();
@@ -78,13 +83,13 @@ describe('Modify', () => {
         await seller.sellToken(
             poly_sushi.contract,
             // only convert half of the ptf
-            BigNumber.from(poly_sushi.smallAmount).div(2),
+            sushiQty.div(2),
             TEST_SLIPPAGE,
         );
         await seller.sellToken(
             native_token.contract,
             // only convert half of the ptf
-            BigNumber.from(native_token.smallAmount).div(2),
+            nativeQty.div(2),
             TEST_SLIPPAGE,
         );
         await seller.execute();
@@ -95,13 +100,13 @@ describe('Modify', () => {
         await seller.sellToken(
             poly_sushi.contract,
             // only convert half of the ptf
-            BigNumber.from(poly_sushi.smallAmount).div(2),
+            sushiQty.div(2),
             TEST_SLIPPAGE,
         );
         await seller.sellToken(
             native_token.contract,
             // only convert half of the ptf
-            BigNumber.from(native_token.smallAmount).div(2),
+            nativeQty.div(2),
             TEST_SLIPPAGE,
         );
         await seller.execute();

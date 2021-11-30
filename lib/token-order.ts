@@ -55,12 +55,16 @@ export class TokenOrderImpl implements _TokenOrder {
         return this.inputHasFees ? removeFees(this.spendQty) : this.spendQty;
     }
 
+    private get orderToken() {
+        return wrap(this.chain, this.inputHasFees ? this.buyToken : this.spendToken);
+    }
+
     private async _prepareFlat(): Promise<void> {
         this._contractOrder = buildOrderStruct(
             // specify that we're using the flat operator
             'Flat',
             // specify output token for fees computation
-            wrap(this.chain, this.buyToken),
+            this.orderToken,
             // see Flat operator implementation:
             [
                 ['address', wrap(this.chain, this.spendToken)],
@@ -89,7 +93,7 @@ export class TokenOrderImpl implements _TokenOrder {
             // specify that we're using the 0x operator
             'ZeroEx',
             // specify output token
-            wrap(this.chain, this.buyToken),
+            this.orderToken,
             // see ZeroEx operator implementation:
             [
                 ['address', wrap(this.chain, this.spendToken)],
