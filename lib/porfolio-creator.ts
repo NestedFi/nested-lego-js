@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction, providers } from 'ethers';
+import { BigNumber } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { PortfolioTokenAdderBase } from './porfolio-token-adder';
 import {

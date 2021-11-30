@@ -7,7 +7,7 @@ import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
 import { ChainTools } from './chain-tools';
 import { unreachable } from './utils';
-import { defaultZeroExFetcher, ZeroExFetcher, ZeroXAnswer } from './0x';
+import { ZeroExFetcher } from './0x';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -71,7 +71,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
 async function readConfig(_opts: NestedConnection): Promise<{
     factoryAddress: HexString;
     chain: Chain;
-    zeroExFetcher: ZeroExFetcher;
+    zeroExFetcher?: ZeroExFetcher;
     signer?: ethers.Signer;
     provider: ethers.providers.Provider;
 }> {
@@ -123,6 +123,6 @@ async function readConfig(_opts: NestedConnection): Promise<{
         signer,
         factoryAddress,
         provider,
-        zeroExFetcher: _opts.zeroExFetcher ?? defaultZeroExFetcher,
+        zeroExFetcher: _opts.zeroExFetcher,
     } as const;
 }

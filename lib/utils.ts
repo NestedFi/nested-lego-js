@@ -2,6 +2,9 @@ import { BigNumber, Signer, utils } from 'ethers';
 import w3utils, { isBigNumber } from 'web3-utils';
 import { defaultContracts, FIXED_FEE } from './default-contracts';
 import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
+import { promisify, callbackify } from 'util';
+// @ts-ignore
+import limit from 'simple-rate-limiter';
 
 export function unreachable(value: never, message?: string): Error {
     return new Error(message ? message : 'Value was supposed to be unreachable' + value);
@@ -110,6 +113,14 @@ export function wrap(chain: Chain, token: HexString): HexString {
     return token;
 }
 
+export function unwrap(chain: Chain, token: HexString): HexString {
+    token = normalize(token);
+    if (token === defaultContracts[chain].wrappedToken) {
+        return NATIVE_TOKEN;
+    }
+    return token;
+}
+
 export type Lazy<T> = () => Promise<T>;
 
 export function lazy<T>(ctor: () => Promise<T>): Lazy<T> {
@@ -152,4 +163,15 @@ export function checkHasSigner(signer: Signer | undefined): Signer {
 
 export function isBigNumberTyped(value: any): value is BigNumber {
     return isBigNumber(value);
+}
+
+export function rateLimit<T extends (...args: any[]) => Promise<any>>(
+    fn: T,
+    limits: { interval: number; limit: number }[],
+): T {
+    let callback = callbackify(fn);
+    for (const l of limits) {
+        callback = limit(callback).to(l.limit).per(l.interval);
+    }
+    return promisify(callback) as any;
 }

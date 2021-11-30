@@ -4,6 +4,7 @@ import { ERC20_ABI } from './default-contracts';
 import { checkHasSigner, lazy, normalize, wrap } from './utils';
 import { Chain, ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from '.';
 import recordsAbi from './nested-records.json';
+import { defaultZeroExFetcher } from './0x';
 
 const decimals = new Map<string, Promise<number>>();
 
@@ -19,7 +20,7 @@ export class ChainTools implements NestedTools {
         readonly provider: providers.Provider,
         readonly factoryInterface: utils.Interface,
         readonly factoryContract: Contract,
-        readonly fetch0xSwap: ZeroExFetcher,
+        readonly _fetch0xSwap: ZeroExFetcher | undefined,
     ) {}
 
     getErc20Decimals(erc20: HexString): Promise<number> {
@@ -76,5 +77,12 @@ export class ChainTools implements NestedTools {
             publicUrl: `https://app.nested.finance/explorer/${this.chain}:${nftId.toNumber()}`,
             receipt,
         };
+    }
+
+    fetch0xSwap(request: ZeroExRequest): Promise<ZeroXAnswer> {
+        if (!this._fetch0xSwap) {
+            return defaultZeroExFetcher(request);
+        }
+        return this._fetch0xSwap(request);
     }
 }

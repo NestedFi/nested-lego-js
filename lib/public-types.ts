@@ -207,7 +207,11 @@ export interface MultiToSingleSwapper extends HasOrders {
 }
 
 export interface Holding {
+    /** Token. Will be 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee... when the wrapped token is the chain's native token (ex: ETH, AVAX, MATIC, ...) */
     readonly token: HexString;
+    /** Same as `token` for ERC20 tokens, but will contain the wrapped token when the the asset is the native token (ex: WETH, WAVAX, ...) */
+    readonly tokenErc20: HexString;
+    /** Token quantity */
     readonly amount: BigNumber;
 }
 
@@ -226,9 +230,9 @@ export interface NestedTools {
     /** Reads a transaction receipt logs, to infer some info about the NFT that has been created in this transaction */
     readTransactionLogs(receipt: providers.TransactionReceipt, operationType: NftEventType): CreatePortfolioResult;
     // /** Gets the NestedRecords contract */
-    recordsContract(): Promise<Contract>;
+    recordsContract(): PromiseLike<Contract>;
     /** Fetch a quote from 0x */
-    fetch0xSwap(request: ZeroExRequest): Promise<ZeroXAnswer>;
+    fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
 }
 
 export interface INestedContracts {
@@ -283,7 +287,7 @@ export interface INestedContracts {
     sellTokensToWallet(portfolioId: PortfolioIdIsh, tokenToReceive: HexString): PortfolioSeller;
 
     /** Get assets in portfolio */
-    getAssets(portfolioId: PortfolioIdIsh): Promise<Holding[]>;
+    getAssets(portfolioId: PortfolioIdIsh): PromiseLike<Holding[]>;
 }
 
 export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;

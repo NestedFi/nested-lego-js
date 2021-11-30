@@ -1516,6 +1516,11 @@ signal-exit@^3.0.2:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.5.tgz#9e3e8cc0c75a99472b44321033a7702e7738252f"
   integrity sha512-KWcOiKeQj6ZyXx7zq4YxSMgHRlod4czeBQZrPb8OKcohcqAXShm7E20kEMle9WBt26hFcAf0qLOcp5zmY7kOqQ==
 
+simple-rate-limiter@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/simple-rate-limiter/-/simple-rate-limiter-0.2.3.tgz#306466faff17e1f22ee758b0a37cd453e8351b41"
+  integrity sha1-MGRm+v8X4fIu51iwo3zUU+g1G0E=
+
 string-width@^4.1.0, string-width@^4.2.0:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"

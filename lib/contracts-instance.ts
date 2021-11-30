@@ -10,7 +10,7 @@ import {
     PortfolioTokenAdder,
     SingleToMultiSwapper,
 } from './public-types';
-import { checkHasSigner, isBigNumberTyped, normalize, wrap } from './utils';
+import { checkHasSigner, isBigNumberTyped, normalize, unwrap, wrap } from './utils';
 import { BigNumber, Signer } from 'ethers';
 import { PortfolioCreatorImpl } from './porfolio-creator';
 import { PortfolioTokenAdderImpl } from './porfolio-token-adder';
@@ -18,7 +18,6 @@ import { SingleToMultiSwapperImpl } from './porfolio-single-to-multi-swapper';
 import { MultiToSingleSwapperImpl } from './porfolio-multi-to-single-swapper';
 import { PortfolioLiquidatorImpl } from './porfolio-liquidator';
 import { PortfolioSellerImpl } from './porfolio-seller';
-import { isBigNumber } from 'web3-utils';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
@@ -43,13 +42,13 @@ export class NestedContractsInstance implements INestedContracts {
     swapSingleToMulti(portfolioId: PortfolioIdIsh, tokenToSpend: HexString): SingleToMultiSwapper {
         // infer the token ID
         const nftId: BigNumber = this._inferNftId(portfolioId);
-        return new SingleToMultiSwapperImpl(this, nftId, wrap(this.chain, normalize(tokenToSpend)));
+        return new SingleToMultiSwapperImpl(this, nftId, wrap(this.chain, tokenToSpend));
     }
 
     swapMultiToSingle(portfolioId: PortfolioIdIsh, tokenToBuy: HexString): MultiToSingleSwapper {
         // infer the token ID
         const nftId: BigNumber = this._inferNftId(portfolioId);
-        return new MultiToSingleSwapperImpl(this, nftId, wrap(this.chain, normalize(tokenToBuy)));
+        return new MultiToSingleSwapperImpl(this, nftId, wrap(this.chain, tokenToBuy));
     }
 
     liquidateToWalletAndDestroy(
@@ -74,7 +73,8 @@ export class NestedContractsInstance implements INestedContracts {
         const ret: any[] = await records.tokenHoldings(nftId);
         return ret.map<Holding>(x => ({
             // only select the properties we'd like to have
-            token: x.token,
+            token: unwrap(this.chain, x.token),
+            tokenErc20: x.token,
             amount: BigNumber.from(x.amount),
         }));
     }

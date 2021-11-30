@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers';
 import { Chain, HexString } from './public-types';
-import { unreachable, wrap } from './utils';
+import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 
 export type ZeroExFetcher = (request: ZeroExRequest) => Promise<ZeroXAnswer>;
@@ -91,9 +91,16 @@ export interface ZeroExRequest {
     readonly spendQty: BigNumber;
 }
 
+// 0x api is limited to 6 requests per sec, and 120 per min
+// => use a lower limit to avoid hitting it.
+const fetchLimited = rateLimit(fetch, [
+    { interval: 1000, limit: 5 },
+    { interval: 60 * 1000, limit: 110 },
+]);
+
 export async function defaultZeroExFetcher(config: ZeroExRequest): Promise<ZeroXAnswer> {
     const url = zxQuoteUrl(config);
-    const response = await fetch(url);
+    const response = await fetchLimited(url);
     const json = await response.json();
     if (!response.ok) {
         const error = json?.validationErrors?.[0].reason || 'Unkonwn error';
