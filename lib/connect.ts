@@ -25,6 +25,10 @@ export type NestedConnection = {
      * nb: The default fetcher is rate-limited to avoid hitting 0x api limits, and implements a backoff retry policy (retries 3 times)
      */
     zeroExFetcher?: ZeroExFetcher;
+    /** @deprecated Customize Nested Finance endpoint (for testing purposes only) */
+    nestedFinanceApi?: string;
+    /** @deprecated Customize Nested Finance endpoint (for testing purposes only) */
+    nestedFinanceUi?: string;
 } & (
     | {
           /** Which chain are we connecting to ? */
@@ -64,7 +68,16 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
     }
 
     // return instance
-    const tools = new ChainTools(chain, signer, provider, nestedFactoryInterface, nestedFactory, zeroExFetcher);
+    const tools = new ChainTools(
+        chain,
+        signer,
+        provider,
+        nestedFactoryInterface,
+        nestedFactory,
+        zeroExFetcher,
+        _opts.nestedFinanceApi ?? 'https://api.nested.finance',
+        _opts.nestedFinanceUi ?? 'https://app.nested.finance',
+    );
     return new NestedContractsInstance(chain, tools, signer);
 }
 

@@ -21,6 +21,8 @@ export class ChainTools implements NestedTools {
         readonly factoryInterface: utils.Interface,
         readonly factoryContract: Contract,
         readonly _fetch0xSwap: ZeroExFetcher | undefined,
+        readonly nestedFinanceApi: string,
+        readonly nestedFinanceUi: string,
     ) {}
 
     getErc20Decimals(erc20: HexString): Promise<number> {
@@ -73,8 +75,8 @@ export class ChainTools implements NestedTools {
             id: `${this.chain}:${nftId.toNumber()}`,
             idInChain: nftId.toHexString() as HexString,
             chain: this.chain,
-            privateUrl: `https://app.nested.finance/portfolios/${this.chain}:${nftId.toNumber()}`,
-            publicUrl: `https://app.nested.finance/explorer/${this.chain}:${nftId.toNumber()}`,
+            privateUrl: `${this.nestedFinanceUi}/portfolios/${this.chain}:${nftId.toNumber()}`,
+            publicUrl: `${this.nestedFinanceUi}/explorer/${this.chain}:${nftId.toNumber()}`,
             receipt,
         };
     }

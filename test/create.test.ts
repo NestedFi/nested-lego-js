@@ -20,7 +20,10 @@ describe('Create', () => {
         const beforeSpent = await instance.tools.balanceOf(poly_usdc.contract);
 
         // swap USDC for SUSHI
-        const ptf = instance.createPortfolio(poly_usdc.contract);
+        const ptf = instance.createPortfolio(poly_usdc.contract, {
+            name: 'TEst Portfolio',
+            tags: ['test'],
+        });
         await ptf.addToken(poly_sushi.contract, poly_usdc.smallAmount, TEST_SLIPPAGE);
         await approve(ptf);
         const { idInChain, id } = await ptf.execute();

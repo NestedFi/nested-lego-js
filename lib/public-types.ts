@@ -99,8 +99,19 @@ export interface CanAddTokensOperation extends HasOrders {
 
 /** Configure an operation aiming to create a new portfolio */
 export interface PortfolioCreator extends CanAddTokensOperation {
-    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    /**
+     * Build call data that can be used to send the transaction to the NestedFacotry contract manually.
+     *
+     * ⚠️ If you plan to send a transaction manually, then you will have to call `.attachMetadataToTransaction()` as soon as you have a transaction hash.
+     * Otherwise, the metadata you gave will be ignored.
+     */
     buildCallData(): CallData;
+
+    /**
+     * Attach the metdata that were given to this transaction hash.
+     * To be executed as soon as you have a transaction hash (BEFORE the transaction is fully processed)
+     */
+    attachMetadataToTransaction(transactionHash: HexString): PromiseLike<void>;
 
     /** Perform the operation */
     execute(): PromiseLike<CreatePortfolioResult>;
@@ -221,6 +232,9 @@ export interface NestedTools {
     readonly factoryInterface: utils.Interface;
     readonly factoryContract: Contract;
     readonly provider: providers.Provider;
+    readonly nestedFinanceApi: string;
+    readonly nestedFinanceUi: string;
+
     /** Gets the number of decimals of a given ERC20 token */
     getErc20Decimals(erc20: HexString): PromiseLike<number>;
     /** Computes a token amount, fetching token digits & converting it to the right BigNumber if the amount you gave is a number */
