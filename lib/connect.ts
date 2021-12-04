@@ -96,8 +96,11 @@ async function readConfig(_opts: NestedConnection): Promise<{
     if ('chain' in _opts) {
         chain = _opts.chain;
         cfg = defaultContracts[_opts.chain];
+        signer = _opts.signer;
+        if (signer?.provider) {
+            throw new Error('Signer must not have a provider when you provide a chain');
+        }
         provider = ethers.providers.getDefaultProvider(cfg.providerConfig);
-        signer = _opts.signer?.connect(provider);
     } else {
         if ('signer' in _opts) {
             signer = _opts.signer;

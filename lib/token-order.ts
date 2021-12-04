@@ -27,14 +27,18 @@ export class TokenOrderImpl implements _TokenOrder {
         this.buyToken = normalize(this.buyToken);
     }
 
+    reset() {
+        this.spendQty = BigNumber.from(0);
+        this.estimatedBoughtQty = BigNumber.from(0);
+        this.price = 0;
+        this.guaranteedPrice = 0;
+        this._contractOrder = null!;
+        this.pendingOp = null;
+    }
+
     changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<boolean> {
         if (BigNumber.from(forBudgetAmount).isZero()) {
-            this.spendQty = BigNumber.from(0);
-            this.estimatedBoughtQty = BigNumber.from(0);
-            this.price = 0;
-            this.guaranteedPrice = 0;
-            this._contractOrder = null!;
-            this.pendingOp = null;
+            this.reset();
             return Promise.resolve(true);
         }
         const tokenFetch: PromiseLike<boolean> = this.parent.tools
@@ -65,6 +69,10 @@ export class TokenOrderImpl implements _TokenOrder {
     }
 
     refresh(): PromiseLike<boolean> {
+        if (this.spendQty.isZero()) {
+            this.reset();
+            return Promise.resolve(true);
+        }
         if (this.buyToken === this.spendToken) {
             // when the input is the same as the output, use the flat operator
             this._prepareFlat();
@@ -93,6 +101,8 @@ export class TokenOrderImpl implements _TokenOrder {
 
     private _prepareFlat() {
         this.pendingOp = null;
+        clearTimeout(this.debouncer?.timeout);
+        this.debouncer = undefined;
         this._contractOrder = buildOrderStruct(
             // specify that we're using the flat operator
             'Flat',
