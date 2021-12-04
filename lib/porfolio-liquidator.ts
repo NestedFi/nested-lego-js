@@ -1,5 +1,4 @@
 import { BigNumber, BigNumberish, ContractReceipt } from 'ethers';
-import { TokenOrder } from '.';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
     CallData,
@@ -11,6 +10,7 @@ import {
     TokenLiquidator,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
+import { notNil } from './utils';
 
 export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     private _orders?: _TokenOrder[];
@@ -27,7 +27,7 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     }
 
     constructor(
-        private parent: INestedContracts,
+        readonly parent: INestedContracts,
         private nftId: BigNumber,
         readonly receivedToken: HexString,
         private defaultSlippage: number,
@@ -50,7 +50,7 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     }
 
     buildCallData(): CallData {
-        const ordersData = this.orders.map(x => x._contractOrder);
+        const ordersData = notNil(this.orders.map(x => x._contractOrder));
         return {
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('destroy', [

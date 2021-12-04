@@ -1,14 +1,14 @@
 import { BigNumber } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { INestedContracts, TokenOrder } from './public-types';
-import { NestedOrder } from './utils';
+import { NestedOrder, notNil } from './utils';
 
 export abstract class HasOrdersImpl implements _HasOrder {
     protected _orders: _TokenOrder[] = [];
     _contractOrder!: NestedOrder;
 
     protected get _ordersData(): NestedOrder[] {
-        return this._orders.map(x => x._contractOrder);
+        return notNil(this._orders.map(x => x._contractOrder));
     }
 
     get orders(): readonly TokenOrder[] {
@@ -28,5 +28,5 @@ export abstract class HasOrdersImpl implements _HasOrder {
         return this.parent.tools;
     }
 
-    constructor(protected parent: INestedContracts) {}
+    constructor(readonly parent: INestedContracts) {}
 }

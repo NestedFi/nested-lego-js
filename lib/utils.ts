@@ -175,3 +175,11 @@ export function rateLimit<T extends (...args: any[]) => Promise<any>>(
     }
     return promisify(callback) as any;
 }
+
+export function notNil<T>(array: T[]): Exclude<T, null | undefined>[] {
+    return array.filter(x => !nullish(x)) as any[];
+}
+
+export function nullish<T>(value: T | null | undefined): value is null | undefined {
+    return value === null || value === undefined;
+}

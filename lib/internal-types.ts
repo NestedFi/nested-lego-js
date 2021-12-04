@@ -8,5 +8,5 @@ export interface _HasOrder extends HasOrders {
 }
 
 export interface _TokenOrder extends TokenOrder {
-    readonly _contractOrder: NestedOrder;
+    readonly _contractOrder: NestedOrder | null;
 }

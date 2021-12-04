@@ -17,7 +17,7 @@ import { lazySync, NestedOrder, normalize, wrap } from './utils';
 export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));
 
-    constructor(parent: INestedContracts, readonly spentToken: HexString) {
+    constructor(readonly parent: INestedContracts, readonly spentToken: HexString) {
         super(parent);
     }
 
@@ -47,6 +47,10 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
     }
 
     async addToken(token: HexString, forBudgetAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
+        token = normalize(token);
+        if (this._orders.some(x => x.buyToken === token)) {
+            throw new Error(`An order already exists in this operation for token ${token}`);
+        }
         const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, true);
         await ret.changeBudgetAmount(forBudgetAmount);
         this._orders.push(ret);

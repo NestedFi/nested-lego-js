@@ -7,12 +7,39 @@ import {
     CreatePortfolioResult,
     HexString,
     NATIVE_TOKEN,
+    PorfolioMetadata,
     PortfolioCreator,
 } from './public-types';
 import fetch from 'node-fetch';
 
 export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements PortfolioCreator {
     metadata?: CreatePortfolioMetadata;
+
+    setMetadata(meta: PorfolioMetadata): void {
+        if (meta.tags) {
+            if (meta.tags.length > 3) {
+                throw new Error('Too many tags (max 3)');
+            }
+            if (meta.tags.some(t => t.length < 2)) {
+                throw new Error('Tag too short (min 2 characters)');
+            }
+            if (meta.tags.find(t => t.length > 14)) {
+                throw new Error('Tag too long (max 14 characters)');
+            }
+        }
+        if (meta.name?.trim()) {
+            if (meta.name.length < 3) {
+                throw new Error('Name too short (min 3 characters)');
+            }
+            if (meta.name.length > 24) {
+                throw new Error('Name too long (max 24 characters)');
+            }
+        }
+        this.metadata = {
+            ...(this.metadata ?? {}),
+            ...meta,
+        };
+    }
 
     buildCallData(): CallData {
         const total = this.totalBudget;

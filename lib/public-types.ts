@@ -12,11 +12,14 @@ export type HexString = `0x${string}`;
 export type HexNumber = `${'' | '-'}${HexString}`;
 export type ChainAndId = `${Chain}:${number}`;
 
-export interface CreatePortfolioMetadata {
+export interface PorfolioMetadata {
     /** Provide a name for the underlying NFT */
     name?: string;
     /** Provide some tags for the underlying NFT  (ex: ['defi'])*/
     tags?: string[];
+}
+
+export interface CreatePortfolioMetadata extends PorfolioMetadata {
     /** Original portfolio ID.
      * Provide it with its chain-qualified name (ex: 'avax:123'), or its raw ID on the current chain (ex: 123)
      */
@@ -32,6 +35,11 @@ export interface CallData {
     value?: BigNumber;
 }
 
+/**
+ * Represents a token operation.
+ * nb: All method calls behave nicely when called in parallel
+ * (async operations are debounced, and the latest call always wins, even if it finishes before a call started earlier)
+ */
 export interface TokenOrder {
     /** Token you'd like to spend */
     readonly spendToken: HexString;
@@ -49,21 +57,34 @@ export interface TokenOrder {
     readonly price: number;
     /** Guaranteed price given the AMM */
     readonly guaranteedPrice: number;
+    /** Estimated received quantity */
+    readonly estimatedBoughtQty: BigNumber;
 
-    /** Change the budget allocated to buying this token */
-    changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<void>;
+    /**
+     * Change the budget allocated to buying this token
+     * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
+     */
+    changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<boolean>;
 
-    /** Change the accepted slippage */
-    changeSlippage(slippage: number): PromiseLike<void>;
+    /**
+     * Change the accepted slippage
+     * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
+     *  */
+    changeSlippage(slippage: number): PromiseLike<boolean>;
 
-    /** Refresh quotes */
-    refresh(): PromiseLike<void>;
+    /**
+     * Refresh quotes
+     * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
+     */
+    refresh(): PromiseLike<boolean>;
 
     /** Remove this token from parent operation */
     remove(): void;
 }
 
 export interface HasOrders {
+    /** Instance that has created this */
+    readonly parent: INestedContracts;
     /** Orders already added to this operation */
     readonly orders: readonly TokenOrder[];
 }
@@ -99,6 +120,9 @@ export interface CanAddTokensOperation extends HasOrders {
 
 /** Configure an operation aiming to create a new portfolio */
 export interface PortfolioCreator extends CanAddTokensOperation {
+    /** Changes the porfolio metadata */
+    setMetadata(metadata: PorfolioMetadata): void;
+
     /**
      * Build call data that can be used to send the transaction to the NestedFacotry contract manually.
      *

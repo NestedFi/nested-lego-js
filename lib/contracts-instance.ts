@@ -28,7 +28,10 @@ export class NestedContractsInstance implements INestedContracts {
 
     createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PortfolioCreator {
         const ret = new PortfolioCreatorImpl(this, normalize(budgetToken));
-        ret.metadata = metadata;
+        if (metadata) {
+            ret.metadata = metadata; // for typing
+            ret.setMetadata(metadata); // just to check constraints
+        }
         return ret;
     }
 
