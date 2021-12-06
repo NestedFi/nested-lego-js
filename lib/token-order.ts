@@ -2,10 +2,11 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString } from '.';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { buildOrderStruct, NestedOrder, normalize, removeFees, wrap } from './utils';
-
+type QChangeResult = 'changed' | 'unchanged' | 'race';
 export class TokenOrderImpl implements _TokenOrder {
-    private pendingOp: PromiseLike<boolean> | null = null;
-    private debouncer?: { timeout: any; resolver: (result: boolean) => void };
+    private pendingQtySet: PromiseLike<QChangeResult> | null = null;
+    private pendingQuotation: PromiseLike<boolean> | null = null;
+    private debouncer?: { timeout: any; resolver: (value: boolean) => void };
     spendQty: BigNumber = BigNumber.from(0);
     _contractOrder: NestedOrder | null = null;
 
@@ -27,49 +28,63 @@ export class TokenOrderImpl implements _TokenOrder {
         this.buyToken = normalize(this.buyToken);
     }
 
-    reset() {
+    private reset() {
         this.spendQty = BigNumber.from(0);
         this.estimatedBoughtQty = BigNumber.from(0);
         this.price = 0;
         this.guaranteedPrice = 0;
         this._contractOrder = null!;
-        this.pendingOp = null;
+        this.pendingQuotation = null;
     }
 
-    changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<boolean> {
+    async changeBudgetAmount(forBudgetAmount: BigNumberish): Promise<boolean> {
         if (BigNumber.from(forBudgetAmount).isZero()) {
             this.reset();
-            return Promise.resolve(true);
+            return true;
         }
-        const tokenFetch: PromiseLike<boolean> = this.parent.tools
-            .toTokenAmount(this.spendToken, forBudgetAmount)
-            .then(amt => {
-                if (this.pendingOp !== tokenFetch) {
-                    // concurrency issue: a newer quote is being requested
-                    return this.pendingOp ?? Promise.resolve(false);
-                }
-                if (this.spendQty.eq(amt)) {
-                    // budget has not changed
-                    return Promise.resolve(false);
-                }
-                this.spendQty = amt;
 
-                // trigger a refresh
-                return this.refresh();
-            });
-        return (this.pendingOp = tokenFetch);
+        switch (await this.changeSpentQty(forBudgetAmount)) {
+            case 'race':
+                return Promise.resolve(false);
+            case 'unchanged':
+                return Promise.resolve(true);
+            case 'changed':
+                return await this.refresh();
+        }
     }
 
-    changeSlippage(slippage: number): PromiseLike<boolean> {
+    private changeSpentQty(forBudgetAmount: BigNumberish): PromiseLike<QChangeResult> {
+        const tokenFetch: PromiseLike<QChangeResult> = this.parent.tools
+            .toTokenAmount(this.spendToken, forBudgetAmount)
+            .then<QChangeResult>(amt => {
+                if (this.pendingQtySet !== tokenFetch) {
+                    // concurrency issue: a newer quote is being requested
+                    return 'race';
+                }
+                this.pendingQtySet = null;
+                if (this.spendQty.eq(amt)) {
+                    // budget has not changed
+                    return 'unchanged';
+                }
+                this.spendQty = amt;
+                return 'changed';
+            });
+        return (this.pendingQtySet = tokenFetch);
+    }
+
+    async changeSlippage(slippage: number): Promise<boolean> {
         if (this.slippage === slippage) {
             return Promise.resolve(true);
         }
         this.slippage = slippage;
-        return this.refresh();
+        // wait for a parallel quantity setting before starting a slippage refresh
+        await this.pendingQtySet;
+        // refresh quote
+        return await this.refresh();
     }
 
     refresh(): PromiseLike<boolean> {
-        if (this.spendQty.isZero()) {
+        if (this.spendQtyWithoutFees.isZero()) {
             this.reset();
             return Promise.resolve(true);
         }
@@ -100,7 +115,7 @@ export class TokenOrderImpl implements _TokenOrder {
     }
 
     private _prepareFlat() {
-        this.pendingOp = null;
+        this.pendingQuotation = null;
         clearTimeout(this.debouncer?.timeout);
         this.debouncer = undefined;
         this._contractOrder = buildOrderStruct(
@@ -127,7 +142,7 @@ export class TokenOrderImpl implements _TokenOrder {
             this.debouncer.resolver(false);
             this.debouncer = undefined;
         }
-        const op = (this.pendingOp = new Promise<boolean>((resolve, reject) => {
+        const op = (this.pendingQuotation = new Promise<boolean>((resolve, reject) => {
             this.debouncer = {
                 resolver: resolve,
                 timeout: setTimeout(async () => {
@@ -142,14 +157,14 @@ export class TokenOrderImpl implements _TokenOrder {
                             spendQty: this.spendQtyWithoutFees,
                         });
 
-                        if (op !== this.pendingOp) {
+                        if (op !== this.pendingQuotation) {
                             // concurrency issue: a newer quote is being requested
-                            return Promise.resolve(false);
+                            return resolve(false);
                         }
                         // 👈 do not await after this line
 
                         this.estimatedBoughtQty = BigNumber.from(zxQuote.buyAmount);
-                        this.pendingOp = null;
+                        this.pendingQuotation = null;
                         this.price = parseFloat(zxQuote.price);
                         this.guaranteedPrice = parseFloat(zxQuote.guaranteedPrice);
                         this._contractOrder = buildOrderStruct(
