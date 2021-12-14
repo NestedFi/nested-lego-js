@@ -16,7 +16,7 @@ export abstract class HasOrdersImpl implements _HasOrder {
     }
 
     get totalBudget(): BigNumber {
-        return this.orders.reduce((a, b) => a.add(b.spendQty), BigNumber.from(0));
+        return this.orders.reduce((a, b) => a.add(b.inputQty), BigNumber.from(0));
     }
 
     _removeOrder(order: _TokenOrder) {

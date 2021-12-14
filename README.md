@@ -51,10 +51,10 @@ if (!(await op.isApproved())) {
 // Will add ~5 USDC of polygon SUSHI in this porfolio
 // allowing 3% slippage
 const fiveUsdc = '0x4c4b40';
-await op.addToken(SUSHI, fiveUsdc, 0.03);
+await op.addToken(SUSHI, 0.03).setInputAmount(fiveUsdc);
 
 // ... and ~5 USDC of MATIC
-await op.addToken(MATIC, fiveUsdc, 0.03);
+await op.addToken(MATIC, 0.03).setInputAmount(fiveUsdc);
 
 // 👉 Send transaction !
 const {id, publicUrl} = await op.execute();
@@ -71,9 +71,9 @@ console.log(`Porfolio ${id} created, you can visualize it at ${publicUrl}`);
 Meaning that those are equivalent:
 
 ```typescript
-await op.addToken(SUSHI, '0x4c4b40', 0.03);
-await op.addToken(SUSHI, BigNumber.from('0x4c4b40'), 0.03);
-await op.addToken(SUSHI, 5, 0.03);
+await op.addToken(SUSHI, 0.03).setInputAmount('0x4c4b40');
+await op.addToken(SUSHI, 0.03).setInputAmount(BigNumber.from('0x4c4b40'));
+await op.addToken(SUSHI, 0.03).setInputAmount(5);
 ```
 
 ## 4) Add tokens from your wallet in an existing porfolio
@@ -89,10 +89,10 @@ if (!(await op.isApproved())) {
 
 // add 1 matic worth of USDC in the porfolio
 const oneMatic = '0x0de0b6b3a7640000';
-await op.addToken(USDC, oneMatic, 0.03);
+await op.addToken(USDC, 0.03).setInputAmount(oneMatic);
 
 // and add 1 matic in the porfolio
-await op.addToken(MATIC, oneMatic, 0.03);
+await op.addToken(MATIC, 0.03).setInputAmount(oneMatic);
 
 // 👉 Send transaction !
 await op.execute();
@@ -105,9 +105,9 @@ await op.execute();
 const op = nested.swapSingleToMulti(id, MATIC);
 
 // ... 1 matic to some usdc
-await op.swapTo(USDC, oneMatic, 0.03);
+await op.swapTo(USDC, 0.03).setInputAmount(oneMatic);
 // ... and 1 matic to some sushi
-await op.swapTo(SUSHI, oneMatic, 0.03);
+await op.swapTo(SUSHI, 0.03).setInputAmount(oneMatic);
 
 // 👉 Send transaction !
 await op.execute();
@@ -120,10 +120,10 @@ await op.execute();
 const op = nested.swapMultiToSingle(id, SUSHI);
 
 // swap 5 USDC to sushi
-await op.swapFrom(USDC, fiveUsdc, 0.03);
+await op.swapFrom(USDC, 0.03).setInputAmount(fiveUsdc);
 
 // swap 1 matic to sushi
-await op.swapFrom(SUSHI, oneSushi, 0.03);
+await op.swapFrom(SUSHI, 0.03).setInputAmount(oneSushi);
 
 // 👉 Send transaction !
 await op.execute();
@@ -136,10 +136,10 @@ await op.execute();
 const op = nested.sellTokensToWallet(id, SUSHI);
 
 // Get back 5 USDC worth of SUSHI
-await op.sellToken(USDC, fiveUsdc, 0.03);
+await op.sellToken(USDC, 0.03).setInputAmount(fiveUsdc);
 
 // and 1 MATIC worth of SUSHI
-await op.sellToken(USDC, oneMatic, 0.03);
+await op.sellToken(USDC, 0.03).setInputAmount(oneMatic);
 
 // 👉 Send transaction !
 await op.execute();
@@ -166,7 +166,7 @@ Each operation will return a `TokenOrder` instance, that allows you to inspect a
 For instance, lets say that you are adding tokens to a porfolio:
 
 ```typescript
-const token = await op.addToken(USDC, '0x123', 0.03);
+const token = op.addToken(USDC, 0.03);
 ```
 
 Then several properties will help you to know what you are going to get, like `token.price` and `token.guaranteedPrice`.
@@ -174,7 +174,13 @@ Then several properties will help you to know what you are going to get, like `t
 If you have a UI to modify the added amount, you will be able to tweak it like that:
 
 ```typescript
-await token.changeBudgetAmount('0x456'); // new amount
+await token.setInputAmount('0x456'); // new amount
+```
+
+or you can specify the output token amount you'd like:
+
+```typescript
+await token.setOutputAmount('0x456'); // new amount
 ```
 
 There are several other uselful methods/properties on each operation. Consult the types for more details.

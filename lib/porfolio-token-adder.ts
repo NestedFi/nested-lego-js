@@ -46,13 +46,12 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
         return this.tools.toTokenAmount(this.spentToken, amt);
     }
 
-    async addToken(token: HexString, forBudgetAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
+    addToken(token: HexString, slippage: number): TokenOrder {
         token = normalize(token);
-        if (this._orders.some(x => x.buyToken === token)) {
+        if (this._orders.some(x => x.outputToken === token)) {
             throw new Error(`An order already exists in this operation for token ${token}`);
         }
-        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, true);
-        await ret.changeBudgetAmount(forBudgetAmount);
+        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input');
         this._orders.push(ret);
         return ret;
     }

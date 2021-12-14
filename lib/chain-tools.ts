@@ -1,8 +1,8 @@
 import { BigNumber, BigNumberish, Contract, providers, Signer, utils } from 'ethers';
-import { CreatePortfolioResult, HexNumber, HexString, NestedTools, NftEventType } from './public-types';
+import { Chain, CreatePortfolioResult, HexNumber, HexString, NestedTools, NftEventType } from './public-types';
 import { ERC20_ABI } from './default-contracts';
 import { checkHasSigner, lazy, normalize, wrap } from './utils';
-import { Chain, ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from '.';
+import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import { defaultZeroExFetcher } from './0x';
 

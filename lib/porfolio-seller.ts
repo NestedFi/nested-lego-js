@@ -10,16 +10,15 @@ export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSelle
         super(parent);
     }
 
-    async sellToken(token: HexString, amountToSell: BigNumberish, slippage: number): Promise<TokenOrder> {
+    sellToken(token: HexString, slippage: number): TokenOrder {
         token = wrap(this.parent.chain, token);
-        const ret = new TokenOrderImpl(this, token, this.receivedToken, slippage, false);
-        await ret.changeBudgetAmount(amountToSell);
+        const ret = new TokenOrderImpl(this, token, this.receivedToken, slippage, 'output');
         this._orders.push(ret);
         return ret;
     }
 
     buildCallData(): CallData {
-        const soldAmounts = this._orders.map(x => x.spendQty);
+        const soldAmounts = this._orders.map(x => x.inputQty);
         if (!soldAmounts.length) {
             throw new Error('Nothing to sell');
         }

@@ -101,6 +101,10 @@ export function removeFees(amt: BigNumber) {
     return safeMult(amt, 1 - FIXED_FEE);
 }
 
+export function addFees(amt: BigNumber) {
+    return safeMult(amt, 1 / (1 - FIXED_FEE));
+}
+
 export function wrap(chain: Chain, token: HexString): HexString {
     token = normalize(token);
     if (token === NATIVE_TOKEN) {

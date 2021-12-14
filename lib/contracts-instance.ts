@@ -1,4 +1,4 @@
-import { Chain, CreatePortfolioMetadata, INestedContracts, NestedTools } from '.';
+import { Chain, CreatePortfolioMetadata, INestedContracts, NestedTools } from './public-types';
 import {
     HexString,
     MultiToSingleSwapper,

@@ -1,23 +1,21 @@
 import { BigNumberish } from '@ethersproject/bignumber';
-import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { INestedContracts } from '.';
+import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
-import { CallData, HexString, SingleToMultiSwapper, TokenOrder } from './public-types';
+import { CallData, HexString, SingleToMultiSwapper, TokenOrder, INestedContracts } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { normalize, wrap } from './utils';
+import { wrap } from './utils';
 
 export class SingleToMultiSwapperImpl extends HasOrdersImpl implements SingleToMultiSwapper {
     constructor(parent: INestedContracts, private nftId: BigNumberish, readonly spentToken: HexString) {
         super(parent);
     }
 
-    async swapTo(token: HexString, forBudgetAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
+    swapTo(token: HexString, slippage: number): TokenOrder {
         token = wrap(this.parent.chain, token);
         if (token === this.spentToken) {
             throw new Error('You cannot swap a token to itself');
         }
-        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, true);
-        await ret.changeBudgetAmount(forBudgetAmount);
+        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input');
         this._orders.push(ret);
         return ret;
     }

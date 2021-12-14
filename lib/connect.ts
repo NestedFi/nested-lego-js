@@ -1,5 +1,4 @@
-import { HexString } from '.';
-import { Chain, INestedContracts } from './public-types';
+import { Chain, INestedContracts, HexString } from './public-types';
 import * as ethers from 'ethers';
 import { Networkish } from '@ethersproject/networks';
 import { chainByChainId, ConnectionConfig, defaultContracts } from './default-contracts';
@@ -7,7 +6,7 @@ import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
 import { ChainTools } from './chain-tools';
 import { unreachable } from './utils';
-import { ZeroExFetcher } from './0x';
+import { ZeroExFetcher } from './0x-types';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -97,10 +96,12 @@ async function readConfig(_opts: NestedConnection): Promise<{
         chain = _opts.chain;
         cfg = defaultContracts[_opts.chain];
         signer = _opts.signer;
+        provider = ethers.providers.getDefaultProvider(cfg.providerConfig);
         if (signer?.provider) {
             throw new Error('Signer must not have a provider when you provide a chain');
+        } else if (signer) {
+            signer = signer.connect(provider);
         }
-        provider = ethers.providers.getDefaultProvider(cfg.providerConfig);
     } else {
         if ('signer' in _opts) {
             signer = _opts.signer;

@@ -1,5 +1,5 @@
-import { BigNumber, BigNumberish, Contract, ContractReceipt, providers, Signer, utils } from 'ethers';
-import { ZeroExRequest, ZeroXAnswer } from '.';
+import type { BigNumber, BigNumberish, Contract, ContractReceipt, providers, Signer, utils } from 'ethers';
+import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
 export enum Chain {
     eth = 'eth',
@@ -35,6 +35,15 @@ export interface CallData {
     value?: BigNumber;
 }
 
+export interface TokenOrderFees {
+    /** Tells if fees will be taken on input, or output */
+    readonly on: 'input' | 'output';
+    /** Token on which those fees are computed */
+    readonly onToken: HexString;
+    /** Amount of fees */
+    readonly amount: BigNumber;
+}
+
 /**
  * Represents a token operation.
  * nb: All method calls behave nicely when called in parallel
@@ -42,29 +51,51 @@ export interface CallData {
  */
 export interface TokenOrder {
     /** Token you'd like to spend */
-    readonly spendToken: HexString;
+    readonly inputToken: HexString;
+
     /** Token you'd like to receive */
-    readonly buyToken: HexString;
+    readonly outputToken: HexString;
+
+    /** Which swap amount has been fixed ? Budget amount ? Or output amount ? */
+    readonly fixedAmount: 'output' | 'input';
+
     /**
      * Accepted slippage (ex: '0.03' means 3% slippage accepted).
      * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
      */
     readonly slippage: number;
-    /** Spent quantity (in spendToken) */
-    readonly spendQty: BigNumber;
+
+    /** Total spent quantity, including fees when any (in spendToken - this is an extimation if you specified an output budget) */
+    readonly inputQty: BigNumber;
+
+    /** Received quantity, including fees when any (in bought token - this is an estimation if you specified an input budget) */
+    readonly outputQty: BigNumber;
 
     /** Price given by the AMM */
     readonly price: number;
+
     /** Guaranteed price given the AMM */
     readonly guaranteedPrice: number;
-    /** Estimated received quantity */
-    readonly estimatedBoughtQty: BigNumber;
+
+    /** Total fees that will be paid back to the Nested protocol */
+    readonly fees: TokenOrderFees;
 
     /**
      * Change the budget allocated to buying this token
      * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    changeBudgetAmount(forBudgetAmount: BigNumberish): PromiseLike<boolean>;
+    setInputAmount(forBudgetAmount: BigNumberish): PromiseLike<boolean>;
+
+    /**
+     * Change the amount we want to receive of this token.
+     * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
+     *
+     * @remark When setting this, fees might be deduced from this amount.
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    setOutputAmount(boughtAmount: BigNumberish): PromiseLike<boolean>;
 
     /**
      * Change the accepted slippage
@@ -97,14 +128,11 @@ export interface CanAddTokensOperation extends HasOrders {
     readonly totalBudget: BigNumber;
 
     /**
-     * Add a new token to this portfolio, with the given budget.
+     * Add a new token to this portfolio.
      * @argument token The token we want to add to this portfolio.
-     * @argument forBudgetAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (ex: 0.03 means 3% slippage allowed slippage)
-     *
-     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    addToken(token: HexString, forBudgetAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+    addToken(token: HexString, slippage: number): TokenOrder;
 
     /** Tells if the Nested contracts have enough allowance to spend the required budget token in your name */
     isApproved(): PromiseLike<boolean>;
@@ -186,14 +214,13 @@ export interface PortfolioSeller extends HasOrders {
     readonly receivedToken: HexString;
 
     /**
-     * Add a new token to this portfolio, with the given budget.
+     * Add a new token to this portfolio.
      * @argument token The token we want to add to this portfolio.
-     * @argument amountToSell How much of the given token must be sold to portfolio
      * @argument slippage Allowed price slippage (ex: 0.03 means 3% slippage allowed slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    sellToken(token: HexString, amountToSell: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+    sellToken(token: HexString, slippage: number): TokenOrder;
 
     /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
     buildCallData(): CallData;
@@ -207,14 +234,13 @@ export interface SingleToMultiSwapper extends HasOrders {
     readonly spentToken: HexString;
 
     /**
-     * Add a new token to this portfolio, with the given budget.
+     * Add a new token to this portfolio.
      * @argument token The token we want to add to this portfolio.
-     * @argument forBudgetAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    swapTo(token: HexString, forBudgetAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+    swapTo(token: HexString, slippage: number): TokenOrder;
 
     /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
     buildCallData(): CallData;
@@ -225,14 +251,13 @@ export interface SingleToMultiSwapper extends HasOrders {
 
 export interface MultiToSingleSwapper extends HasOrders {
     /**
-     * Sell a given budget of the given token.
+     * Sell a given token.
      * @argument sellToken The token we want to sell in this portfolio.
-     * @argument sellTokenAmount How much of the portfolio budget must be allocated to buying this token.
      * @argument slippage Allowed price slippage (defaults to 0.03 = 3% slippage)
      *
      * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
      */
-    swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage: number): PromiseLike<TokenOrder>;
+    swapFrom(sellToken: HexString, slippage: number): TokenOrder;
 
     /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
     buildCallData(): CallData;

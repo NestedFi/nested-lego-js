@@ -1,29 +1,27 @@
 import { BigNumberish } from '@ethersproject/bignumber';
-import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { INestedContracts, MultiToSingleSwapper } from '.';
+import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
-import { CallData, HexString, SingleToMultiSwapper, TokenOrder } from './public-types';
+import { CallData, HexString, TokenOrder, INestedContracts, MultiToSingleSwapper } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { normalize, wrap } from './utils';
+import { wrap } from './utils';
 
 export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSingleSwapper {
     constructor(parent: INestedContracts, private nftId: BigNumberish, readonly toToken: HexString) {
         super(parent);
     }
 
-    async swapFrom(sellToken: HexString, sellTokenAmount: BigNumberish, slippage: number): Promise<TokenOrder> {
+    swapFrom(sellToken: HexString, slippage: number): TokenOrder {
         sellToken = wrap(this.parent.chain, sellToken);
         if (sellToken === this.toToken) {
             throw new Error('You cannot swap a token to itself');
         }
-        const ret = new TokenOrderImpl(this, sellToken, this.toToken, slippage, false);
-        await ret.changeBudgetAmount(sellTokenAmount);
+        const ret = new TokenOrderImpl(this, sellToken, this.toToken, slippage, 'output');
         this._orders.push(ret);
         return ret;
     }
 
     buildCallData(): CallData {
-        const soldAmounts = this._orders.map(x => x.spendQty);
+        const soldAmounts = this._orders.map(x => x.inputQty);
         if (!soldAmounts.length) {
             throw new Error('Nothing to swap');
         }

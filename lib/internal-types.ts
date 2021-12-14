@@ -1,5 +1,4 @@
-import { NestedTools, TokenOrder } from '.';
-import { HasOrders } from './public-types';
+import { HasOrders, NestedTools, TokenOrder } from './public-types';
 import { NestedOrder } from './utils';
 
 export interface _HasOrder extends HasOrders {

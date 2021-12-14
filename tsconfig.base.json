@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "declaration": true,
+        "removeComments": false,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "es2019",
+        "esModuleInterop": true,
+        "keyofStringsOnly": false,
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "outDir": "./dist",
+        "incremental": true,
+        "strict": true,
+        "resolveJsonModule": true
+    }
+}
