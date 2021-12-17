@@ -1,12 +1,13 @@
 import { Chain, INestedContracts, HexString } from './public-types';
 import * as ethers from 'ethers';
 import { Networkish } from '@ethersproject/networks';
-import { chainByChainId, ConnectionConfig, defaultContracts } from './default-contracts';
+import { ConnectionConfig, defaultContracts } from './default-contracts';
 import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
 import { ChainTools } from './chain-tools';
 import { unreachable } from './utils';
 import { ZeroExFetcher } from './0x-types';
+import { inferChainFromId } from './public-utils';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -123,10 +124,7 @@ async function readConfig(_opts: NestedConnection): Promise<{
         }
         // infer chain from chain id
         const { chainId } = await provider.getNetwork();
-        chain = chainByChainId[chainId];
-        if (!chain) {
-            throw new Error(`Invalid connection config: Unsupported chain ${chainId}`);
-        }
+        chain = inferChainFromId(chainId);
         cfg = defaultContracts[chain];
     }
 

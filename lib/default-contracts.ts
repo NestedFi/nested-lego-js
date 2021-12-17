@@ -20,19 +20,19 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
     },
     bsc: {
         providerConfig: 'https://bsc-dataseed.binance.org/',
-        factoryAddress: null,
-        wrappedToken: null,
-        chainId: null,
+        factoryAddress: '0x563239c970880a7e81667277738b0dbc912fe786',
+        wrappedToken: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
+        chainId: 56,
     },
     avax: {
-        providerConfig: 'https://api.avax.network/ext/bc/C/rpc', // chain 43114
-        factoryAddress: null,
-        wrappedToken: null,
-        chainId: null,
+        providerConfig: 'https://api.avax.network/ext/bc/C/rpc',
+        factoryAddress: '0x563239c970880a7e81667277738b0dbc912fe786',
+        wrappedToken: '0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7',
+        chainId: 43114,
     },
     poly: {
-        providerConfig: 'https://polygon-rpc.com', // chain 137
-        factoryAddress: '0xfEDc04397A9cd49f48815DF2D3b991C0c6398A96',
+        providerConfig: 'https://polygon-rpc.com',
+        factoryAddress: '0x563239c970880a7e81667277738b0dbc912fe786',
         wrappedToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         chainId: 137,
     },
