@@ -1,5 +1,13 @@
 import { BigNumber, BigNumberish, Contract, providers, Signer, utils } from 'ethers';
-import { Chain, CreatePortfolioResult, HexNumber, HexString, NestedTools, NftEventType } from './public-types';
+import {
+    Chain,
+    CreatePortfolioResult,
+    HexNumber,
+    HexString,
+    NATIVE_TOKEN,
+    NestedTools,
+    NftEventType,
+} from './public-types';
 import { ERC20_ABI } from './default-contracts';
 import { checkHasSigner, lazy, normalize, wrap } from './utils';
 import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
@@ -26,7 +34,14 @@ export class ChainTools implements NestedTools {
     ) {}
 
     getErc20Decimals(erc20: HexString): Promise<number> {
-        const key = `${this.chain}:${normalize(erc20)}`;
+        erc20 = normalize(erc20);
+        // native token has 18 decimals
+        if (erc20 === NATIVE_TOKEN) {
+            return Promise.resolve(18);
+        }
+
+        // else, fetch from cache/contract
+        const key = `${this.chain}:${erc20}`;
         if (decimals.has(key)) {
             return decimals.get(key)!;
         }
@@ -52,6 +67,13 @@ export class ChainTools implements NestedTools {
     }
 
     async balanceOf(token: HexString): Promise<BigNumber> {
+        token = normalize(token);
+        // for native token, get the native balance
+        if (token === NATIVE_TOKEN) {
+            return await checkHasSigner(this.signer).getBalance();
+        }
+
+        // else, call contract
         const user = await checkHasSigner(this.signer).getAddress();
         const contract = await new Contract(token, ERC20_ABI, this.provider);
         const balance = (await contract.balanceOf(user)) as BigNumber;

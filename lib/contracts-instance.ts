@@ -71,6 +71,9 @@ export class NestedContractsInstance implements INestedContracts {
 
     /** Get assets in portfolio */
     async getAssets(portfolioId: PortfolioIdIsh): Promise<Holding[]> {
+        if (!portfolioId) {
+            return [];
+        }
         const nftId = this._inferNftId(portfolioId);
         const records = await this.tools.recordsContract();
         const ret: any[] = await records.tokenHoldings(nftId);
