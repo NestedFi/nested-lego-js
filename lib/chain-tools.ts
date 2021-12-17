@@ -1,25 +1,26 @@
 import { BigNumber, BigNumberish, Contract, providers, Signer, utils } from 'ethers';
-import {
-    Chain,
-    CreatePortfolioResult,
-    HexNumber,
-    HexString,
-    NATIVE_TOKEN,
-    NestedTools,
-    NftEventType,
-} from './public-types';
+import { Chain, CreatePortfolioResult, HexString, NATIVE_TOKEN, NestedTools, NftEventType } from './public-types';
 import { ERC20_ABI } from './default-contracts';
 import { checkHasSigner, lazy, normalize, wrap } from './utils';
 import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
+import feeSplitterAbi from './nested-fee-splitter.json';
 import { defaultZeroExFetcher } from './0x';
 
 const decimals = new Map<string, Promise<number>>();
 
 export class ChainTools implements NestedTools {
+    readonly feeSplitterInterface: utils.Interface;
+
     recordsContract = lazy(async () => {
         const recordsAddress = await this.factoryContract.nestedRecords();
         return new Contract(recordsAddress, recordsAbi, this.provider);
+    });
+
+    feeSplitterContract = lazy(async () => {
+        const recordsAddress = await this.factoryContract.feeSplitter();
+        const ret = new Contract(recordsAddress, feeSplitterAbi, this.provider);
+        return this.signer ? ret.connect(this.signer) : ret;
     });
 
     constructor(
@@ -31,7 +32,9 @@ export class ChainTools implements NestedTools {
         readonly _fetch0xSwap: ZeroExFetcher | undefined,
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
-    ) {}
+    ) {
+        this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
+    }
 
     getErc20Decimals(erc20: HexString): Promise<number> {
         erc20 = normalize(erc20);

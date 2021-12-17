@@ -1,4 +1,4 @@
-import { Chain, CreatePortfolioMetadata, INestedContracts, NestedTools } from './public-types';
+import { Chain, CreatePortfolioMetadata, FeesClaimer, INestedContracts, NestedTools } from './public-types';
 import {
     HexString,
     MultiToSingleSwapper,
@@ -18,6 +18,7 @@ import { SingleToMultiSwapperImpl } from './porfolio-single-to-multi-swapper';
 import { MultiToSingleSwapperImpl } from './porfolio-multi-to-single-swapper';
 import { PortfolioLiquidatorImpl } from './porfolio-liquidator';
 import { PortfolioSellerImpl } from './porfolio-seller';
+import { FeesClaimerImpl } from './fees-claimer';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
@@ -100,5 +101,16 @@ export class NestedContractsInstance implements INestedContracts {
             );
         }
         return BigNumber.from(parseInt(id));
+    }
+
+    async getClaimableFees(token: HexString, ofOwner?: HexString): Promise<BigNumber> {
+        const feeSplitter = await this.tools.recordsContract();
+        ofOwner ??= (await this.signer.getAddress()) as HexString;
+        const ret = await feeSplitter.getAmountDue(ofOwner, token);
+        return ret;
+    }
+
+    claimFees(tokens: HexString[]): FeesClaimer {
+        return new FeesClaimerImpl(this, tokens);
     }
 }
