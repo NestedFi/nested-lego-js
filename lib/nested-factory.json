@@ -458,7 +458,7 @@
         "outputs": [
             {
                 "internalType": "bytes32[]",
-                "name": "addresses",
+                "name": "",
                 "type": "bytes32[]"
             }
         ],
