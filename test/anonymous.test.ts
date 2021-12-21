@@ -54,4 +54,10 @@ describe('Anonymous user', () => {
             .setInputAmount(BigNumber.from(native_token.smallAmount).div(2));
         assert.isString(seller.buildCallData()?.data);
     });
+
+    it('can sell native token to portfolio', async () => {
+        const seller = instance.sellTokensToWallet('0x42', native_token.contract);
+        await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        assert.isString(seller.buildCallData()?.data);
+    });
 });

@@ -137,7 +137,7 @@ export class TokenOrderImpl implements _TokenOrder {
             this.reset();
             return Promise.resolve(true);
         }
-        if (this.outputToken === this.inputToken) {
+        if (wrap(this.chain, this.outputToken) === wrap(this.chain, this.inputToken)) {
             // when the input is the same as the output, use the flat operator
             this._prepareFlat();
             return Promise.resolve(true);
