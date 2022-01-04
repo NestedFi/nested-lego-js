@@ -8,6 +8,7 @@ import { wrap } from './utils';
 export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSingleSwapper {
     constructor(parent: INestedContracts, private nftId: BigNumberish, readonly toToken: HexString) {
         super(parent);
+        this.toToken = wrap(this.parent.chain, this.toToken);
     }
 
     swapFrom(sellToken: HexString, slippage: number): TokenOrder {

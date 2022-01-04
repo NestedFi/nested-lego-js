@@ -231,7 +231,13 @@ export class TokenOrderImpl implements _TokenOrder {
                         if (this.fixedAmount === 'input') {
                             this.outputQty = BigNumber.from(zxQuote.buyAmount);
                         } else {
-                            const input = BigNumber.from(zxQuote.sellAmount);
+                            // this is how much we are expecting to sell
+                            let input = BigNumber.from(zxQuote.sellAmount);
+                            // just add slippage to input amount
+                            // this is necessary to avoid reverts in the 0x swap if the slippage is too high
+                            // ... but the extra funds will be sent back to the user.
+                            input = input.add(safeMult(input, this.slippage));
+
                             // add fees on input if necessary
                             this.inputQty = this.feesOn === 'input' ? addFees(input) : input;
                         }

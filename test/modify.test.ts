@@ -77,12 +77,17 @@ describe('Modify', () => {
         await ptf.execute();
     });
 
-    it('can liquidate a portfolio', async () => {
+    it('can liquidate a portfolio to erc20', async () => {
         const liquidator = instance.liquidateToWalletAndDestroy(id, poly_usdc.contract, 0.3);
         await liquidator.refreshAssets();
         await liquidator.execute();
     });
 
+    it('can liquidate a portfolio to native', async () => {
+        const liquidator = instance.liquidateToWalletAndDestroy(id, native_token.contract, 0.3);
+        await liquidator.refreshAssets();
+        await liquidator.execute();
+    });
     it('can sell some token to portfolio (to erc20)', async () => {
         const seller = instance.sellTokensToWallet(id, poly_usdc.contract);
         await seller.sellToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(
@@ -106,6 +111,13 @@ describe('Modify', () => {
             // only convert half of the ptf
             nativeQty.div(2),
         );
+        await seller.execute();
+    });
+
+
+    it('can sell native token to wallet', async () => {
+        const seller = instance.sellTokensToWallet(id, native_token.contract);
+        await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(nativeQty.div(2));
         await seller.execute();
     });
 });

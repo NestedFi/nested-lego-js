@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractReceipt } from 'ethers';
+import { BigNumber, ContractReceipt } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
     CallData,
@@ -10,7 +10,7 @@ import {
     TokenLiquidator,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { notNil } from './utils';
+import { notNil, wrap } from './utils';
 
 export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     private _orders?: _TokenOrder[];
@@ -31,7 +31,9 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
         private nftId: BigNumber,
         readonly receivedToken: HexString,
         private defaultSlippage: number,
-    ) {}
+    ) {
+        this.receivedToken = wrap(this.parent.chain, this.receivedToken);
+    }
 
     _removeOrder(order: _TokenOrder): void {
         throw new Error('Cannot remove an order from a liquidation.');

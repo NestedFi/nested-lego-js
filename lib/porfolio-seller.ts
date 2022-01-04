@@ -8,6 +8,7 @@ import { normalize, wrap } from './utils';
 export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSeller {
     constructor(parent: INestedContracts, private nftId: BigNumber, readonly receivedToken: HexString) {
         super(parent);
+        this.receivedToken = wrap(this.parent.chain, this.receivedToken);
     }
 
     sellToken(token: HexString, slippage: number): TokenOrder {
