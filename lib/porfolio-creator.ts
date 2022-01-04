@@ -11,6 +11,7 @@ import {
     PortfolioCreator,
 } from './public-types';
 import fetch from 'node-fetch';
+import { inferNftId } from './utils';
 
 export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements PortfolioCreator {
     metadata?: CreatePortfolioMetadata;
@@ -43,10 +44,12 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
 
     buildCallData(): CallData {
         const total = this.totalBudget;
+        const idOrNull = this.metadata?.originalPortfolioId;
+        const originalId = idOrNull ? inferNftId(idOrNull, this.parent.chain) : 0;
         return {
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('create', [
-                this.metadata?.originalPortfolioId ?? 0,
+                originalId,
                 this.spentToken,
                 total,
                 this._ordersData,

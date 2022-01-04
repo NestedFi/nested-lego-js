@@ -10,7 +10,7 @@ import {
     PortfolioTokenAdder,
     SingleToMultiSwapper,
 } from './public-types';
-import { checkHasSigner, isBigNumberTyped, normalize, unwrap, wrap } from './utils';
+import { checkHasSigner, inferNftId, normalize, unwrap, wrap } from './utils';
 import { BigNumber, Signer } from 'ethers';
 import { PortfolioCreatorImpl } from './porfolio-creator';
 import { PortfolioTokenAdderImpl } from './porfolio-token-adder';
@@ -81,26 +81,14 @@ export class NestedContractsInstance implements INestedContracts {
         return ret.map<Holding>(x => ({
             // only select the properties we'd like to have
             token: unwrap(this.chain, x.token),
-            tokenErc20: x.token,
+            tokenErc20: normalize(x.token),
             amount: BigNumber.from(x.amount),
         }));
     }
 
     /** Infer the related NFT id, and throw an error if not on the right chain */
-    private _inferNftId(portfolioId: PortfolioIdIsh): BigNumber {
-        if (isBigNumberTyped(portfolioId)) {
-            return portfolioId;
-        }
-        if (/^0x[a-f\d]+$/i.test(portfolioId)) {
-            return BigNumber.from(portfolioId);
-        }
-        const [_, idChain, id] = /^(\w+):(\d+)$/.exec(portfolioId) ?? [];
-        if (idChain !== this.chain) {
-            throw new Error(
-                `The given portfolio ID "${portfolioId}" cannot be processed on this chain (${this.chain})`,
-            );
-        }
-        return BigNumber.from(parseInt(id));
+    _inferNftId(portfolioId: PortfolioIdIsh): BigNumber {
+        return inferNftId(portfolioId, this.chain);
     }
 
     async getClaimableFees(token: HexString, ofOwner?: HexString): Promise<BigNumber> {

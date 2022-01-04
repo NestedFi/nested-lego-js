@@ -23,7 +23,7 @@ export interface CreatePortfolioMetadata extends PorfolioMetadata {
     /** Original portfolio ID.
      * Provide it with its chain-qualified name (ex: 'avax:123'), or its raw ID on the current chain (ex: 123)
      */
-    originalPortfolioId?: string | number;
+    originalPortfolioId?: PortfolioIdIsh;
 }
 
 export interface CallData {

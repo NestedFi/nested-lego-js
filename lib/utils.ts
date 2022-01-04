@@ -1,7 +1,7 @@
 import { BigNumber, Signer, utils } from 'ethers';
 import w3utils, { isBigNumber } from 'web3-utils';
 import { defaultContracts, FIXED_FEE } from './default-contracts';
-import { Chain, HexNumber, HexString, NATIVE_TOKEN, ZERO_ADDRESS } from './public-types';
+import { Chain, HexNumber, HexString, NATIVE_TOKEN, PortfolioIdIsh, ZERO_ADDRESS } from './public-types';
 import { promisify, callbackify } from 'util';
 // @ts-ignore
 import limit from 'simple-rate-limiter';
@@ -186,4 +186,18 @@ export function notNil<T>(array: T[]): Exclude<T, null | undefined>[] {
 
 export function nullish<T>(value: T | null | undefined): value is null | undefined {
     return value === null || value === undefined;
+}
+
+export function inferNftId(portfolioId: PortfolioIdIsh, expectedChain: Chain): BigNumber {
+    if (isBigNumberTyped(portfolioId)) {
+        return portfolioId;
+    }
+    if (/^0x[a-f\d]+$/i.test(portfolioId) || /^\d+$/.test(portfolioId)) {
+        return BigNumber.from(portfolioId);
+    }
+    const [_, idChain, id] = /^(\w+):(\d+)$/.exec(portfolioId) ?? [];
+    if (idChain !== expectedChain) {
+        throw new Error(`The given portfolio ID "${portfolioId}" cannot be processed on this chain (${expectedChain})`);
+    }
+    return BigNumber.from(parseInt(id));
 }
