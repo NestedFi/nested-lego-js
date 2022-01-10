@@ -92,7 +92,7 @@ export class NestedContractsInstance implements INestedContracts {
     }
 
     async getClaimableFees(token: HexString, ofOwner?: HexString): Promise<BigNumber> {
-        const feeSplitter = await this.tools.recordsContract();
+        const feeSplitter = await this.tools.feeSplitterContract();
         ofOwner ??= (await this.signer.getAddress()) as HexString;
         const ret = await feeSplitter.getAmountDue(ofOwner, token);
         return ret;
