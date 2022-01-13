@@ -13,7 +13,9 @@ export class FeesClaimerImpl implements FeesClaimer {
         const feeSplitter = await this.parent.tools.feeSplitterContract();
         return {
             to: feeSplitter.address as HexString,
-            data: this.parent.tools.feeSplitterInterface.encodeFunctionData('releaseTokens', this.tokens) as HexString,
+            data: this.parent.tools.feeSplitterInterface.encodeFunctionData('releaseTokens', [
+                this.tokens,
+            ]) as HexString,
         };
     }
 

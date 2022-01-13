@@ -229,6 +229,14 @@ export interface PortfolioSeller extends HasOrders {
     execute(): PromiseLike<ContractReceipt>;
 }
 
+export interface PorfolioSender {
+    /** Build call data that can be used to send the transaction to the NestedAsset contract manually  */
+    buildCallData(): Promise<CallData>;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
 export interface FeesClaimer {
     /** Tokens that will be claimed */
     readonly tokens: readonly HexString[];
@@ -291,6 +299,7 @@ export interface NestedTools {
     readonly chain: Chain;
     readonly factoryInterface: utils.Interface;
     readonly feeSplitterInterface: utils.Interface;
+    readonly assetInterface: utils.Interface;
     readonly factoryContract: Contract;
     readonly provider: providers.Provider;
     readonly nestedFinanceApi: string;
@@ -304,10 +313,12 @@ export interface NestedTools {
     balanceOf(tokenAddress: HexString): PromiseLike<BigNumber>;
     /** Reads a transaction receipt logs, to infer some info about the NFT that has been created in this transaction */
     readTransactionLogs(receipt: providers.TransactionReceipt, operationType: NftEventType): CreatePortfolioResult;
-    // /** Gets the NestedRecords contract */
+    /** Gets the NestedRecords contract */
     recordsContract(): PromiseLike<Contract>;
-    // /** Gets the NestedRecords contract */
+    /** Gets the NestedRecords contract */
     feeSplitterContract(): PromiseLike<Contract>;
+    /** Gets the NestedAsset contract */
+    assetContract(): PromiseLike<Contract>;
     /** Fetch a quote from 0x */
     fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
 }
@@ -371,6 +382,9 @@ export interface INestedContracts {
 
     /** Claim fees earned in the given tokens */
     claimFees(tokens: HexString[]): FeesClaimer;
+
+    /** Send NFT to another address */
+    transferPorfolioTo(portfolioId: PortfolioIdIsh, to: HexString): PorfolioSender;
 }
 
 export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;

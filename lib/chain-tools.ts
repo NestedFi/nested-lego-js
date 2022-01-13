@@ -5,12 +5,14 @@ import { checkHasSigner, lazy, normalize, wrap } from './utils';
 import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import feeSplitterAbi from './nested-fee-splitter.json';
+import assetAbi from './nested-asset.json';
 import { defaultZeroExFetcher } from './0x';
 
 const decimals = new Map<string, Promise<number>>();
 
 export class ChainTools implements NestedTools {
     readonly feeSplitterInterface: utils.Interface;
+    readonly assetInterface: utils.Interface;
 
     recordsContract = lazy(async () => {
         const recordsAddress = await this.factoryContract.nestedRecords();
@@ -20,6 +22,12 @@ export class ChainTools implements NestedTools {
     feeSplitterContract = lazy(async () => {
         const recordsAddress = await this.factoryContract.feeSplitter();
         const ret = new Contract(recordsAddress, feeSplitterAbi, this.provider);
+        return this.signer ? ret.connect(this.signer) : ret;
+    });
+
+    assetContract = lazy(async () => {
+        const assetAddress = await this.factoryContract.nestedAsset();
+        const ret = new Contract(assetAddress, assetAbi, this.provider);
         return this.signer ? ret.connect(this.signer) : ret;
     });
 
@@ -34,6 +42,7 @@ export class ChainTools implements NestedTools {
         readonly nestedFinanceUi: string,
     ) {
         this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
+        this.assetInterface = new utils.Interface(assetAbi);
     }
 
     getErc20Decimals(erc20: HexString): Promise<number> {

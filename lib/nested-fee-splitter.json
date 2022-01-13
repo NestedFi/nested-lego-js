@@ -7,9 +7,9 @@
                 "type": "address[]"
             },
             {
-                "internalType": "uint256[]",
+                "internalType": "uint96[]",
                 "name": "_weights",
-                "type": "uint256[]"
+                "type": "uint96[]"
             },
             {
                 "internalType": "uint256",
@@ -95,6 +95,82 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "RoyaltiesReceived",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "weigth",
+                "type": "uint256"
+            }
+        ],
+        "name": "RoyaltiesWeightUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "weight",
+                "type": "uint256"
+            }
+        ],
+        "name": "ShareholderUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "weight",
+                "type": "uint256"
+            }
+        ],
+        "name": "ShareholdersAdded",
+        "type": "event"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -151,21 +227,14 @@
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "releaseETH",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
-                "internalType": "contract IERC20",
-                "name": "_token",
-                "type": "address"
+                "internalType": "contract IERC20[]",
+                "name": "_tokens",
+                "type": "address[]"
             }
         ],
-        "name": "releaseToken",
+        "name": "releaseTokens",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -178,7 +247,7 @@
                 "type": "address[]"
             }
         ],
-        "name": "releaseTokens",
+        "name": "releaseTokensNoETH",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -289,9 +358,9 @@
                 "type": "address[]"
             },
             {
-                "internalType": "uint256[]",
+                "internalType": "uint96[]",
                 "name": "_weights",
-                "type": "uint256[]"
+                "type": "uint96[]"
             }
         ],
         "name": "setShareholders",
@@ -395,9 +464,9 @@
                 "type": "uint256"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint96",
                 "name": "_weight",
-                "type": "uint256"
+                "type": "uint96"
             }
         ],
         "name": "updateShareholder",

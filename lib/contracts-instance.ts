@@ -1,4 +1,11 @@
-import { Chain, CreatePortfolioMetadata, FeesClaimer, INestedContracts, NestedTools } from './public-types';
+import {
+    Chain,
+    CreatePortfolioMetadata,
+    FeesClaimer,
+    INestedContracts,
+    NestedTools,
+    PorfolioSender,
+} from './public-types';
 import {
     HexString,
     MultiToSingleSwapper,
@@ -19,6 +26,7 @@ import { MultiToSingleSwapperImpl } from './porfolio-multi-to-single-swapper';
 import { PortfolioLiquidatorImpl } from './porfolio-liquidator';
 import { PortfolioSellerImpl } from './porfolio-seller';
 import { FeesClaimerImpl } from './fees-claimer';
+import { PorfolioSenderImpl } from './porfolio-sender';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
@@ -100,5 +108,10 @@ export class NestedContractsInstance implements INestedContracts {
 
     claimFees(tokens: HexString[]): FeesClaimer {
         return new FeesClaimerImpl(this, tokens);
+    }
+
+    transferPorfolioTo(portfolioId: PortfolioIdIsh, to: HexString, from?: HexString): PorfolioSender {
+        const id = inferNftId(portfolioId, this.chain);
+        return new PorfolioSenderImpl(this, from, to, id);
     }
 }
