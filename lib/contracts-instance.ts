@@ -11,7 +11,7 @@ import {
     SingleToMultiSwapper,
 } from './public-types';
 import { checkHasSigner, inferNftId, normalize, unwrap, wrap } from './utils';
-import { BigNumber, Signer } from 'ethers';
+import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { PortfolioCreatorImpl } from './porfolio-creator';
 import { PortfolioTokenAdderImpl } from './porfolio-token-adder';
 import { SingleToMultiSwapperImpl } from './porfolio-single-to-multi-swapper';
@@ -77,12 +77,12 @@ export class NestedContractsInstance implements INestedContracts {
         }
         const nftId = this._inferNftId(portfolioId);
         const records = await this.tools.recordsContract();
-        const ret: any[] = await records.tokenHoldings(nftId);
-        return ret.map<Holding>(x => ({
+        const [tokens, amounts]: [tokens: HexString[], amounts: BigNumberish[]] = await records.tokenHoldings(nftId);
+        return tokens.map<Holding>((t, i) => ({
             // only select the properties we'd like to have
-            token: unwrap(this.chain, x.token),
-            tokenErc20: normalize(x.token),
-            amount: BigNumber.from(x.amount),
+            token: unwrap(this.chain, t),
+            tokenErc20: normalize(t),
+            amount: BigNumber.from(amounts[i]),
         }));
     }
 
