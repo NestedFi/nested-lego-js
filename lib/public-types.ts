@@ -384,7 +384,7 @@ export interface INestedContracts {
     claimFees(tokens: HexString[]): FeesClaimer;
 
     /** Send NFT to another address */
-    transferPorfolioTo(portfolioId: PortfolioIdIsh, to: HexString): PorfolioSender;
+    transferPorfolioTo(portfolioId: PortfolioIdIsh, to: HexString, from?: HexString): PorfolioSender;
 }
 
 export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;
