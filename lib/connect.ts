@@ -76,7 +76,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
         nestedFactory,
         zeroExFetcher,
         _opts.nestedFinanceApi ?? 'https://api.nested.finance',
-        _opts.nestedFinanceUi ?? 'https://app.nested.finance',
+        _opts.nestedFinanceUi ?? 'https://app.nested.fi',
     );
     return new NestedContractsInstance(chain, tools, signer);
 }
