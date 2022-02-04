@@ -27,6 +27,7 @@ import { PortfolioLiquidatorImpl } from './porfolio-liquidator';
 import { PortfolioSellerImpl } from './porfolio-seller';
 import { FeesClaimerImpl } from './fees-claimer';
 import { PorfolioSenderImpl } from './porfolio-sender';
+import { computeDeposit, computeWithdrawal } from './budget-computer';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
@@ -61,6 +62,30 @@ export class NestedContractsInstance implements INestedContracts {
         // infer the token ID
         const nftId: BigNumber = this._inferNftId(portfolioId);
         return new MultiToSingleSwapperImpl(this, nftId, wrap(this.chain, tokenToBuy));
+    }
+
+    async depositToPorfolio(
+        portfolioId: PortfolioIdIsh,
+        token: HexString,
+        budget: BigNumberish,
+        slippage: number,
+    ): Promise<PortfolioTokenAdder> {
+        const assets = await this.getAssets(portfolioId);
+        const adder = this.addTokensToPortfolio(portfolioId, token);
+        await computeDeposit(this.tools, adder, assets, token, budget, slippage);
+        return adder;
+    }
+
+    async withdrawFromPortfolio(
+        portfolioId: PortfolioIdIsh,
+        withdrawToken: HexString,
+        withdrawAmount: BigNumberish,
+        slippage: number,
+    ): Promise<PortfolioSeller> {
+        const assets = await this.getAssets(portfolioId);
+        const seller = this.sellTokensToWallet(portfolioId, withdrawToken);
+        await computeWithdrawal(this.tools, seller, assets, withdrawToken, withdrawAmount, slippage);
+        return seller;
     }
 
     liquidateToWalletAndDestroy(

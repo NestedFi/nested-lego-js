@@ -360,6 +360,48 @@ export interface INestedContracts {
     swapMultiToSingle(portfolioId: PortfolioIdIsh, tokenToBuy: HexString): MultiToSingleSwapper;
 
     /**
+     * Smart helper that helps you to add some given budget to the given porfolio,
+     * while trying to keep the porfolios current assets proportions unchanged.
+     *
+     * It is equivalent to multiple judicious calls to addToken() in a PorfolioTokenAdder,
+     * after having computed asset value proportions against 0x.
+     *
+     * @argument portfolioId The portfolio to deposit to
+     * @argument budgetToken The token to add as budget in the portfolio
+     * @argument budgetAmount How much budget to add
+     * @argument slippage Default slippage  (can be customized asset-by-asset, see setSlippage() on the returned type)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    depositToPorfolio(
+        portfolioId: PortfolioIdIsh,
+        budgetToken: HexString,
+        budgetAmount: BigNumberish,
+        slippage: number,
+    ): Promise<PortfolioTokenAdder>;
+
+    /**
+     * Smart helper that helps you to withdraw a given amount of to the given token from a porfolio,
+     * while trying to keep the porfolios current assets proportions unchanged.
+     *
+     * It is equivalent to multiple judicious calls to sellToken() in a PortfolioSeller,
+     * after having computed asset value proportions against 0x.
+     *
+     * @argument portfolioId The portfolio to withdraw from
+     * @argument withdrawToken The token to add as budget in the portfolio
+     * @argument withdrawAmount How much budget to withdraw
+     * @argument slippage Default slippage  (can be customized asset-by-asset, see setSlippage() on the returned type)
+     *
+     * @remark If the passed budget is a number, then this lib will take care of fetching the token digits, and converting it to the right BigNumber for you.
+     */
+    withdrawFromPortfolio(
+        portfolioId: PortfolioIdIsh,
+        withdrawToken: HexString,
+        withdrawAmount: BigNumberish,
+        slippage: number,
+    ): Promise<PortfolioSeller>;
+
+    /**
      * Sell all assets in portfolio to wallet & burns the associated NFT
      * @argument portfolioId The portfolio to liquidate
      * @argument tokenToReceive The token you will receive on your wallet

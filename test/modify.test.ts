@@ -120,4 +120,18 @@ describe('Modify', () => {
         await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(nativeQty.div(2));
         await seller.execute();
     });
+
+
+    it ('can deposit budget', async () => {
+        const adder = await instance.depositToPorfolio(id, native_token.contract, native_token.smallAmount, 0.3);
+        const receipt = await adder.execute();
+        console.log(receipt.transactionHash);
+    });
+
+
+    it ('can withdraw budget', async () => {
+        const adder = await instance.withdrawFromPortfolio(id, poly_usdc.contract, BigNumber.from(poly_usdc.smallAmount).mul(3), 0.3);
+        const receipt = await adder.execute();
+        console.log(receipt.transactionHash);
+    });
 });
