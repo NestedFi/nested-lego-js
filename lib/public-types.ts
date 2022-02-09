@@ -33,6 +33,8 @@ export interface CallData {
     data: HexString;
     /** Value that must be sent as native token */
     value?: BigNumber;
+    /** Gas limit to use */
+    gasLimit?: BigNumber;
 }
 
 export interface TokenOrderFees {

@@ -198,7 +198,7 @@ const nested = await connect({ chain: Chain.poly });
 When you have such an instance, all `.execute()` methods will throw an error. Instead, you can get the call data that are expected to be sent to our contracts. For instance:
 
 ```typescript
-const callData = op.buildCallData();
+const callData = await op.buildCallData();
 ```
 
 It will contain 3 properties:

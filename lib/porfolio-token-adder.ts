@@ -12,7 +12,7 @@ import {
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { lazySync, NestedOrder, normalize, wrap } from './utils';
+import { lazySync, normalize } from './utils';
 
 export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));

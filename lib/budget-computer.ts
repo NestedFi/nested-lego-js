@@ -8,12 +8,6 @@ interface Price {
     /** ...will give you how much token */
     pToken: BigNumber;
 }
-function toPrice({ buyAmount, sellAmount }: ZeroXAnswer): Price {
-    return {
-        pBudget: BigNumber.from(sellAmount),
-        pToken: BigNumber.from(buyAmount),
-    };
-}
 
 export async function computeDeposit(
     tools: NestedTools,
@@ -41,7 +35,10 @@ export async function computeDeposit(
                     spendQty: addBudget,
                     slippage,
                 })
-                .then(toPrice),
+                .then<Price>(r => ({
+                    pBudget: BigNumber.from(r.sellAmount),
+                    pToken: BigNumber.from(r.buyAmount),
+                })),
         ),
     );
 
@@ -86,7 +83,10 @@ export async function computeWithdrawal(
                     boughtQty: withdrawAmt,
                     slippage,
                 })
-                .then(toPrice),
+                .then<Price>(r => ({
+                    pBudget: BigNumber.from(r.buyAmount),
+                    pToken: BigNumber.from(r.sellAmount),
+                })),
         ),
     );
 

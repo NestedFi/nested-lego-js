@@ -69,7 +69,7 @@ export function buildOrderStruct(operator: string, outToken: HexString, data: [R
  *
  */
 export function safeMult(bn: BigNumber, ratio: number): BigNumber {
-    if (!bn) {
+    if (!bn || ratio === 1) {
         return bn;
     }
 

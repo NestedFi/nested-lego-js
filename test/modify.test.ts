@@ -128,9 +128,13 @@ describe('Modify', () => {
         console.log(receipt.transactionHash);
     });
 
-
-    it ('can withdraw budget', async () => {
-        const adder = await instance.withdrawFromPortfolio(id, poly_usdc.contract, BigNumber.from(poly_usdc.smallAmount).mul(3), 0.3);
+    it('can withdraw budget', async () => {
+        const adder = await instance.withdrawFromPortfolio(
+            id,
+            poly_usdc.contract,
+            BigNumber.from(poly_usdc.smallAmount),
+            0.3,
+        );
         const receipt = await adder.execute();
         console.log(receipt.transactionHash);
     });

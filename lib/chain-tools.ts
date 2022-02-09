@@ -116,9 +116,14 @@ export class ChainTools implements NestedTools {
     }
 
     fetch0xSwap(request: ZeroExRequest): Promise<ZeroXAnswer> {
+        const toFetch: ZeroExRequest = {
+            ...request,
+            buyToken: wrap(this.chain, request.buyToken),
+            spendToken: wrap(this.chain, request.spendToken),
+        };
         if (!this._fetch0xSwap) {
-            return defaultZeroExFetcher(request);
+            return defaultZeroExFetcher(toFetch);
         }
-        return this._fetch0xSwap(request);
+        return this._fetch0xSwap(toFetch);
     }
 }
