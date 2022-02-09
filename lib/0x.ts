@@ -4,8 +4,8 @@ import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 import { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
-function zxQuoteUrl(config: ZeroExRequest): string {
-    const endpoint = zxEndpoint(config.chain);
+function zxQuoteUrl(config: ZeroExRequest, _zeroExUrl: ((chain: Chain) => string) | undefined): string {
+    const endpoint = (_zeroExUrl ?? zxEndpoint)(config.chain);
 
     const op =
         'spendQty' in config
@@ -40,13 +40,41 @@ const fetchLimited = rateLimit(fetch, [
     { interval: 60 * 1000, limit: 110 },
 ]);
 
-export async function defaultZeroExFetcher(config: ZeroExRequest): Promise<ZeroXAnswer> {
-    const url = zxQuoteUrl(config);
-    const response = await fetchLimited(url);
-    const json = await response.json();
-    if (!response.ok) {
-        const error = json?.validationErrors?.[0].reason || 'Unkonwn error';
-        throw new Error(`Failed to fetch 0x quote: ${error} while fetching ${url} (${response.status})`);
+export async function defaultZeroExFetcher(
+    config: ZeroExRequest,
+    _zeroExUrl: ((chain: Chain) => string) | undefined,
+): Promise<ZeroXAnswer> {
+    const url = zxQuoteUrl(config, _zeroExUrl);
+    let retry = 0;
+    while (true) {
+        const response = await fetchLimited(url);
+
+        // 429: too many requests => retry 10 times, over 5 seconds
+        if (response.status === 429) {
+            if (++retry > 10) {
+                throw new Error(`Failed to fetch 0x quote because you are over-quota (tried 10 times).`);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+        }
+
+        let json: any;
+        try {
+            json = await response.json();
+        } catch (e) {
+            // nop !
+        }
+
+        // other rerror
+        if (!response.ok) {
+            const error = json?.validationErrors?.[0].reason || 'Unkonwn error';
+            throw new Error(`Failed to fetch 0x quote: ${error} while fetching ${url} (${response.status})`);
+        }
+        if (!json) {
+            throw new Error(
+                `Failed to fetch 0x quote: invalid json returned while fetching ${url} (${response.status})`,
+            );
+        }
+        return json;
     }
-    return json;
 }

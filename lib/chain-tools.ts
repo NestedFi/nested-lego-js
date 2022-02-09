@@ -38,6 +38,7 @@ export class ChainTools implements NestedTools {
         readonly factoryInterface: utils.Interface,
         readonly factoryContract: Contract,
         readonly _fetch0xSwap: ZeroExFetcher | undefined,
+        readonly _zeroExUrl: ((chain: Chain) => string) | undefined,
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
     ) {
@@ -122,7 +123,7 @@ export class ChainTools implements NestedTools {
             spendToken: wrap(this.chain, request.spendToken),
         };
         if (!this._fetch0xSwap) {
-            return defaultZeroExFetcher(toFetch);
+            return defaultZeroExFetcher(toFetch, this._zeroExUrl);
         }
         return this._fetch0xSwap(toFetch);
     }
