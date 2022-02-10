@@ -22,29 +22,42 @@ export function hexToObject<T>(data: string): T {
     return JSON.parse(w3utils.hexToString(data));
 }
 
+// see https://github.com/NestedFinance/nested-core-lego/blob/d937f6aa782c3453784e3d58cedaee012eda4273/contracts/interfaces/INestedFactory.sol#L73-L78
+export interface BatchedOutputOrders {
+    outputToken: HexString;
+    amounts: BigNumber[];
+    orders: NestedOrder[];
+    toReserve: boolean;
+}
+
+// see https://github.com/NestedFinance/nested-core-lego/blob/d937f6aa782c3453784e3d58cedaee012eda4273/contracts/interfaces/INestedFactory.sol#L60-L65
+export interface BatchedInputOrders {
+    inputToken: HexString;
+    amount: BigNumber;
+    orders: NestedOrder[];
+    fromReserve: boolean;
+}
+
+// see https://github.com/NestedFinance/nested-core-lego/blob/d937f6aa782c3453784e3d58cedaee012eda4273/contracts/interfaces/INestedFactory.sol#L48-L52
 export interface NestedOrder {
     operator: string;
     token: HexString;
     callData: string;
-    commit: boolean;
 }
 
 type RawDataType = 'address' | 'bytes4' | 'bytes' | 'uint256';
 export function buildOrderStruct(operator: string, outToken: HexString, data: [RawDataType, any][]): NestedOrder {
     const abiCoder = new utils.AbiCoder();
-    //  👉 The contract will prepend an address to the call data we have built.
-    // ... given that dynamic length parameters are stored in place as pointers
-    //   (the actual data being appended to the encoded data, and a pointer to that data is stored in place of the actual argument)
-    //  ... then we must somehow recreate that offset here, by writing a dummy address, that will be removed from the data we're sending.
-    //  that way, the pointers will be OK once the address is prepended contract-side.
-    const coded = abiCoder.encode(['address', ...data.map(x => x[0])], [ZERO_ADDRESS, ...data.map(x => x[1])]);
+    const coded = abiCoder.encode(
+        data.map(x => x[0]),
+        data.map(x => x[1]),
+    );
 
     // 👉 Building the struct, as defined in Solidity:
     // struct Order {
     //     bytes32 operator;
     //     address token;
     //     bytes callData;
-    //     bool commit;
     // }
     return {
         // specify which operator?
@@ -52,9 +65,7 @@ export function buildOrderStruct(operator: string, outToken: HexString, data: [R
         // specify the token that this order will output
         token: outToken,
         // encode the given data
-        callData: '0x' + coded.slice(64 + 2), // remove the leading 32 bytes (one address) and the leading 0x
-        // callData,
-        commit: true, // to remove on next contract update (commit)
+        callData: coded,
     };
 }
 
@@ -200,4 +211,9 @@ export function inferNftId(portfolioId: PortfolioIdIsh, expectedChain: Chain): B
         throw new Error(`The given portfolio ID "${portfolioId}" cannot be processed on this chain (${expectedChain})`);
     }
     return BigNumber.from(parseInt(id));
+}
+
+/** Just a user-friendly typing helper that ensures an object is of a given type */
+export function as<T>(value: T): T {
+    return value;
 }

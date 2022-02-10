@@ -3,7 +3,7 @@ import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
 import { CallData, HexString, TokenOrder, INestedContracts, MultiToSingleSwapper } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { wrap } from './utils';
+import { as, BatchedOutputOrders, wrap } from './utils';
 
 export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSingleSwapper {
     constructor(parent: INestedContracts, private nftId: BigNumberish, readonly toToken: HexString) {
@@ -28,11 +28,16 @@ export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSi
         }
         return {
             to: this.parent.tools.factoryContract.address as HexString,
-            data: this.parent.tools.factoryInterface.encodeFunctionData('sellTokensToNft', [
+            data: this.parent.tools.factoryInterface.encodeFunctionData('processOutputOrders', [
                 this.nftId,
-                this.toToken,
-                soldAmounts,
-                this._ordersData,
+                [
+                    as<BatchedOutputOrders>({
+                        outputToken: this.toToken,
+                        amounts: soldAmounts,
+                        orders: this._ordersData,
+                        toReserve: true,
+                    }),
+                ],
             ]) as HexString,
         };
     }

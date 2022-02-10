@@ -21,10 +21,10 @@ describe('Modify', () => {
         const { idInChain } = await ptf.execute();
         assert.isString(idInChain);
         id = idInChain;
-        const assets = await instance.getAssets(idInChain);
+        console.log(`👉 Created ptf ${id}...`);
+        const assets = await instance.getAssets(id);
         sushiQty = assets.find(x => x.token === poly_sushi.contract)!.amount;
         nativeQty = assets.find(x => x.token === native_token.contract)!.amount;
-        // id = '0x47';
         console.log(`👉 Starting test on ptf ${id}...`);
     });
 
@@ -55,10 +55,10 @@ describe('Modify', () => {
 
     it('can swap a single token to multiple tokens with output budget (intra-nft)', async () => {
         // spend half of MATIC we have in the ptf to some USDC
-        const ptf = instance.swapSingleToMulti(id, poly_usdc.contract);
+        const ptf = instance.swapSingleToMulti(id, native_token.contract);
         await ptf.swapTo(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(
             // very small amount of (wont fail unless sushi becomes HUGE)
-            '0x50',
+            BigNumber.from(poly_sushi.smallAmount).div(1000),
         );
         await ptf.execute();
     });
@@ -88,6 +88,7 @@ describe('Modify', () => {
         await liquidator.refreshAssets();
         await liquidator.execute();
     });
+
     it('can sell some token to portfolio (to erc20)', async () => {
         const seller = instance.sellTokensToWallet(id, poly_usdc.contract);
         await seller.sellToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(
@@ -114,15 +115,13 @@ describe('Modify', () => {
         await seller.execute();
     });
 
-
     it('can sell native token to wallet', async () => {
         const seller = instance.sellTokensToWallet(id, native_token.contract);
         await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(nativeQty.div(2));
         await seller.execute();
     });
 
-
-    it ('can deposit budget', async () => {
+    it('can deposit budget', async () => {
         const adder = await instance.depositToPorfolio(id, native_token.contract, native_token.smallAmount, 0.3);
         const receipt = await adder.execute();
         console.log(receipt.transactionHash);

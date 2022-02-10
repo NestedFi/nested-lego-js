@@ -45,10 +45,22 @@
                 "type": "bytes32"
             },
             {
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "implementation",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "selector",
+                        "type": "bytes4"
+                    }
+                ],
                 "indexed": false,
-                "internalType": "address",
+                "internalType": "struct IOperatorResolver.Operator",
                 "name": "destination",
-                "type": "address"
+                "type": "tuple"
             }
         ],
         "name": "CacheUpdated",
@@ -193,94 +205,51 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "_nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "contract IERC20",
-                "name": "_sellToken",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_sellTokenAmount",
-                "type": "uint256"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "bytes32",
-                        "name": "operator",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "callData",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "commit",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct INestedFactory.Order[]",
-                "name": "_orders",
-                "type": "tuple[]"
-            }
-        ],
-        "name": "addTokens",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
                 "name": "_originalTokenId",
                 "type": "uint256"
             },
             {
-                "internalType": "contract IERC20",
-                "name": "_sellToken",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_sellTokenAmount",
-                "type": "uint256"
-            },
-            {
                 "components": [
                     {
-                        "internalType": "bytes32",
-                        "name": "operator",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token",
+                        "internalType": "contract IERC20",
+                        "name": "inputToken",
                         "type": "address"
                     },
                     {
-                        "internalType": "bytes",
-                        "name": "callData",
-                        "type": "bytes"
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "bytes32",
+                                "name": "operator",
+                                "type": "bytes32"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "token",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "bytes",
+                                "name": "callData",
+                                "type": "bytes"
+                            }
+                        ],
+                        "internalType": "struct INestedFactory.Order[]",
+                        "name": "orders",
+                        "type": "tuple[]"
                     },
                     {
                         "internalType": "bool",
-                        "name": "commit",
+                        "name": "fromReserve",
                         "type": "bool"
                     }
                 ],
-                "internalType": "struct INestedFactory.Order[]",
-                "name": "_orders",
+                "internalType": "struct INestedFactory.BatchedInputOrders[]",
+                "name": "_batchedOrders",
                 "type": "tuple[]"
             }
         ],
@@ -317,11 +286,6 @@
                         "internalType": "bytes",
                         "name": "callData",
                         "type": "bytes"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "commit",
-                        "type": "bool"
                     }
                 ],
                 "internalType": "struct INestedFactory.Order[]",
@@ -350,19 +314,27 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "_nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_timestamp",
-                "type": "uint256"
+                "internalType": "address",
+                "name": "ownerAddr",
+                "type": "address"
             }
         ],
-        "name": "increaseLockTimestamp",
+        "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "initialized",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -415,6 +387,221 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_nftId",
+                "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "contract IERC20",
+                        "name": "inputToken",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "bytes32",
+                                "name": "operator",
+                                "type": "bytes32"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "token",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "bytes",
+                                "name": "callData",
+                                "type": "bytes"
+                            }
+                        ],
+                        "internalType": "struct INestedFactory.Order[]",
+                        "name": "orders",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fromReserve",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct INestedFactory.BatchedInputOrders[]",
+                "name": "_batchedInputOrders",
+                "type": "tuple[]"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "contract IERC20",
+                        "name": "outputToken",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256[]",
+                        "name": "amounts",
+                        "type": "uint256[]"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "bytes32",
+                                "name": "operator",
+                                "type": "bytes32"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "token",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "bytes",
+                                "name": "callData",
+                                "type": "bytes"
+                            }
+                        ],
+                        "internalType": "struct INestedFactory.Order[]",
+                        "name": "orders",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "toReserve",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct INestedFactory.BatchedOutputOrders[]",
+                "name": "_batchedOutputOrders",
+                "type": "tuple[]"
+            }
+        ],
+        "name": "processInputAndOutputOrders",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_nftId",
+                "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "contract IERC20",
+                        "name": "inputToken",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "bytes32",
+                                "name": "operator",
+                                "type": "bytes32"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "token",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "bytes",
+                                "name": "callData",
+                                "type": "bytes"
+                            }
+                        ],
+                        "internalType": "struct INestedFactory.Order[]",
+                        "name": "orders",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fromReserve",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct INestedFactory.BatchedInputOrders[]",
+                "name": "_batchedOrders",
+                "type": "tuple[]"
+            }
+        ],
+        "name": "processInputOrders",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_nftId",
+                "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "contract IERC20",
+                        "name": "outputToken",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256[]",
+                        "name": "amounts",
+                        "type": "uint256[]"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "bytes32",
+                                "name": "operator",
+                                "type": "bytes32"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "token",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "bytes",
+                                "name": "callData",
+                                "type": "bytes"
+                            }
+                        ],
+                        "internalType": "struct INestedFactory.Order[]",
+                        "name": "orders",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "toReserve",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct INestedFactory.BatchedOutputOrders[]",
+                "name": "_batchedOrders",
+                "type": "tuple[]"
+            }
+        ],
+        "name": "processOutputOrders",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -472,7 +659,7 @@
     },
     {
         "inputs": [],
-        "name": "resolverAddressesRequired",
+        "name": "resolverOperatorsRequired",
         "outputs": [
             {
                 "internalType": "bytes32[]",
@@ -486,162 +673,12 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "_nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "contract IERC20",
-                "name": "_buyToken",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "_sellTokensAmount",
-                "type": "uint256[]"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "bytes32",
-                        "name": "operator",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "callData",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "commit",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct INestedFactory.Order[]",
-                "name": "_orders",
-                "type": "tuple[]"
-            }
-        ],
-        "name": "sellTokensToNft",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "contract IERC20",
-                "name": "_buyToken",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "_sellTokensAmount",
-                "type": "uint256[]"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "bytes32",
-                        "name": "operator",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "callData",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "commit",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct INestedFactory.Order[]",
-                "name": "_orders",
-                "type": "tuple[]"
-            }
-        ],
-        "name": "sellTokensToWallet",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "contract FeeSplitter",
                 "name": "_feeSplitter",
                 "type": "address"
             }
         ],
         "name": "setFeeSplitter",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "contract IERC20",
-                "name": "_sellToken",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_sellTokenAmount",
-                "type": "uint256"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "bytes32",
-                        "name": "operator",
-                        "type": "bytes32"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "callData",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "commit",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct INestedFactory.Order[]",
-                "name": "_orders",
-                "type": "tuple[]"
-            }
-        ],
-        "name": "swapTokenForTokens",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -668,6 +705,24 @@
             }
         ],
         "name": "unlockTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_nftId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateLockTimestamp",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

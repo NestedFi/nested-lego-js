@@ -12,7 +12,7 @@ import {
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { lazySync, normalize } from './utils';
+import { as, BatchedInputOrders, lazySync, normalize } from './utils';
 
 export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));
@@ -67,11 +67,16 @@ export class PortfolioTokenAdderImpl extends PortfolioTokenAdderBase implements 
         }
         return {
             to: this.parent.tools.factoryContract.address as HexString,
-            data: this.parent.tools.factoryInterface.encodeFunctionData('addTokens', [
+            data: this.parent.tools.factoryInterface.encodeFunctionData('processInputOrders', [
                 this.nftId,
-                this.spentToken,
-                total,
-                this._ordersData,
+                [
+                    as<BatchedInputOrders>({
+                        inputToken: this.spentToken,
+                        amount: total,
+                        orders: this._ordersData,
+                        fromReserve: false,
+                    }),
+                ],
             ]) as HexString,
             // compute how much native token we need as input:
             value: this.spentToken === NATIVE_TOKEN ? total : BigNumber.from(0),

@@ -11,7 +11,7 @@ import {
     PortfolioCreator,
 } from './public-types';
 import fetch from 'node-fetch';
-import { inferNftId } from './utils';
+import { as, BatchedInputOrders, inferNftId } from './utils';
 
 export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements PortfolioCreator {
     metadata?: CreatePortfolioMetadata;
@@ -50,9 +50,15 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('create', [
                 originalId,
-                this.spentToken,
-                total,
-                this._ordersData,
+                // todo: allow multiple inputs on creations
+                [
+                    as<BatchedInputOrders>({
+                        inputToken: this.spentToken,
+                        amount: total,
+                        orders: this._ordersData,
+                        fromReserve: false,
+                    }),
+                ],
             ]) as HexString,
             // compute how much native token we need as input:
             value: this.spentToken === NATIVE_TOKEN ? total : BigNumber.from(0),
