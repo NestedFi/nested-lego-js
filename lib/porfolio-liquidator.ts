@@ -10,7 +10,7 @@ import {
     TokenLiquidator,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { notNil, wrap } from './utils';
+import { notNil, safeMult, wrap } from './utils';
 
 export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     private _orders?: _TokenOrder[];
@@ -66,6 +66,7 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     async execute(): Promise<ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
+        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

@@ -3,7 +3,7 @@ import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
 import { CallData, HexString, INestedContracts, PortfolioSeller, TokenOrder } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { as, BatchedOutputOrders, normalize, wrap } from './utils';
+import { as, BatchedOutputOrders, normalize, safeMult, wrap } from './utils';
 
 export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSeller {
     constructor(parent: INestedContracts, private nftId: BigNumber, readonly receivedToken: HexString) {
@@ -13,6 +13,9 @@ export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSelle
 
     sellToken(token: HexString, slippage: number): TokenOrder {
         token = wrap(this.parent.chain, token);
+        if (this._orders.some(x => x.inputToken === token)) {
+            throw new Error(`An input order already exists in this operation for token ${token}`);
+        }
         const ret = new TokenOrderImpl(this, token, this.receivedToken, slippage, 'output');
         this._orders.push(ret);
         return ret;
@@ -42,6 +45,7 @@ export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSelle
     async execute(): Promise<ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
+        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

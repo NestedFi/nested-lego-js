@@ -1,10 +1,9 @@
 import { BigNumber } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { INestedContracts, TokenOrder } from './public-types';
-import { NestedOrder, notNil } from './utils';
+import { NestedOrder, notNil, sumBn } from './utils';
 
-export abstract class HasOrdersImpl implements _HasOrder {
-    protected _orders: _TokenOrder[] = [];
+export class HasOrdersImpl implements _HasOrder {
     _contractOrder!: NestedOrder;
 
     protected get _ordersData(): NestedOrder[] {
@@ -16,7 +15,7 @@ export abstract class HasOrdersImpl implements _HasOrder {
     }
 
     get totalBudget(): BigNumber {
-        return this.orders.reduce((a, b) => a.add(b.inputQty), BigNumber.from(0));
+        return sumBn(this.orders.map(b => b.inputQty));
     }
 
     _removeOrder(order: _TokenOrder) {
@@ -28,5 +27,5 @@ export abstract class HasOrdersImpl implements _HasOrder {
         return this.parent.tools;
     }
 
-    constructor(readonly parent: INestedContracts) {}
+    constructor(readonly parent: INestedContracts, protected _orders: _TokenOrder[] = []) {}
 }

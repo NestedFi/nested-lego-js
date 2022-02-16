@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, Contract, providers, Signer, utils } from 'ethers';
+import { BigNumber, BigNumberish, constants, Contract, ContractTransaction, providers, Signer, utils } from 'ethers';
 import { Chain, CreatePortfolioResult, HexString, NATIVE_TOKEN, NestedTools, NftEventType } from './public-types';
 import { ERC20_ABI } from './default-contracts';
 import { checkHasSigner, lazy, normalize, wrap } from './utils';
@@ -31,6 +31,9 @@ export class ChainTools implements NestedTools {
         return this.signer ? ret.connect(this.signer) : ret;
     });
 
+    private _tokensAnon = new Map<HexString, Contract>();
+    private _tokensSigned = new Map<HexString, Contract>();
+
     constructor(
         readonly chain: Chain,
         private signer: Signer | undefined,
@@ -44,6 +47,17 @@ export class ChainTools implements NestedTools {
     ) {
         this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
         this.assetInterface = new utils.Interface(assetAbi);
+    }
+
+    private tokenContract(token: HexString, signed: boolean) {
+        token = normalize(token);
+        const col = signed ? this._tokensSigned : this._tokensAnon;
+        if (col.has(token)) {
+            return col.get(token)!;
+        }
+        const ret = new Contract(token, ERC20_ABI, signed ? this.signer : this.provider);
+        col.set(token, ret);
+        return ret;
     }
 
     getErc20Decimals(erc20: HexString): Promise<number> {
@@ -60,7 +74,7 @@ export class ChainTools implements NestedTools {
         }
         const get = (async () => {
             try {
-                return await new Contract(erc20, ERC20_ABI, this.provider).decimals();
+                return await this.tokenContract(erc20, false).decimals();
             } catch (e) {
                 // remove promise from cache (to re-run it when we have network back)
                 decimals.delete(key);
@@ -88,9 +102,25 @@ export class ChainTools implements NestedTools {
 
         // else, call contract
         const user = await checkHasSigner(this.signer).getAddress();
-        const contract = await new Contract(token, ERC20_ABI, this.provider);
-        const balance = (await contract.balanceOf(user)) as BigNumber;
+        const balance = (await this.tokenContract(token, false).balanceOf(user)) as BigNumber;
         return balance;
+    }
+
+    async factoryAllowance(ofUser: HexString, forToken: HexString): Promise<BigNumber> {
+        forToken = normalize(forToken);
+        if (forToken === NATIVE_TOKEN) {
+            return constants.MaxUint256;
+        }
+        const contract = this.tokenContract(forToken, true);
+        const allowance = await contract.allowance(ofUser, this.factoryContract.address);
+        return allowance;
+    }
+
+    async approve(token: HexString, amount?: BigNumberish): Promise<ContractTransaction> {
+        token = normalize(token);
+        const toApprove = amount ? await this.toTokenAmount(token, amount) : constants.MaxUint256;
+        const contract = this.tokenContract(token, true);
+        return await contract.approve(this.factoryContract.address, toApprove);
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */

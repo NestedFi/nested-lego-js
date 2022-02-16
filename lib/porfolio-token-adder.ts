@@ -1,5 +1,4 @@
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers } from 'ethers';
-import { ERC20_ABI } from './default-contracts';
 import { HasOrdersImpl } from './has-horders';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
@@ -12,11 +11,9 @@ import {
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { as, BatchedInputOrders, lazySync, normalize } from './utils';
+import { as, BatchedInputOrders, lazySync, normalize, safeMult } from './utils';
 
 export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
-    private tokenContract = lazySync(() => new Contract(this.spentToken, ERC20_ABI, this.parent.signer));
-
     constructor(readonly parent: INestedContracts, readonly spentToken: HexString) {
         super(parent);
     }
@@ -25,8 +22,8 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
         if (this.spentToken === NATIVE_TOKEN) {
             return true;
         }
-        const user = await this.parent.signer.getAddress();
-        const allowance = await this.tokenContract().allowance(user, this.tools.factoryContract.address);
+        const user = (await this.parent.signer.getAddress()) as HexString;
+        const allowance = await this.tools.factoryAllowance(user, this.spentToken);
         return allowance.gte(BigNumber.from(this.totalBudget));
     }
 
@@ -34,16 +31,8 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
         if (this.spentToken === NATIVE_TOKEN) {
             return;
         }
-        const toApprove = amount ? await this.toBudget(amount) : ethers.constants.MaxUint256;
-        const tx: ContractTransaction = await this.tokenContract().approve(
-            this.tools.factoryContract.address,
-            toApprove,
-        );
+        const tx: ContractTransaction = await this.tools.approve(this.spentToken, amount);
         await tx.wait();
-    }
-
-    private toBudget(amt: BigNumberish) {
-        return this.tools.toTokenAmount(this.spentToken, amt);
     }
 
     addToken(token: HexString, slippage: number): TokenOrder {
@@ -86,6 +75,7 @@ export class PortfolioTokenAdderImpl extends PortfolioTokenAdderBase implements 
     async execute(): Promise<ethers.ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
+        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

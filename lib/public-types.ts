@@ -1,4 +1,13 @@
-import type { BigNumber, BigNumberish, Contract, ContractReceipt, providers, Signer, utils } from 'ethers';
+import type {
+    BigNumber,
+    BigNumberish,
+    Contract,
+    ContractReceipt,
+    ContractTransaction,
+    providers,
+    Signer,
+    utils,
+} from 'ethers';
 import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
 export enum Chain {
@@ -287,6 +296,48 @@ export interface MultiToSingleSwapper extends HasOrders {
     execute(): PromiseLike<ContractReceipt>;
 }
 
+export interface PortfolioComplexOperation {
+    /** Step 1: Deposits */
+    readonly deposits: readonly TokenOrder[];
+    /** Step 2: Intra-porfolio swaps */
+    readonly swaps: readonly TokenOrder[];
+    /** Step 3: Withdrawals */
+    readonly withdrawals: readonly TokenOrder[];
+
+    /**
+     * Get all tokens that must be approved.
+     * This list will be empty if you dont call `addFromWallet()`
+     */
+    tokensToApprove(): Promise<{ token: HexString; amount: BigNumber }[]>;
+
+    /**
+     * Approve all tokens that must be approved, one-by-one.
+     * This will trigger one transaction for each token that must be approved (see tokensToApprove())
+     *
+     * @param exactAmounts Only approve the exact amounts that are required for this operation.
+     */
+    approveAll(exactAmounts?: boolean): Promise<void>;
+
+    /** Add tokens from your wallet in your portfolio */
+    addFromWallet(tokenToAdd: HexString): TokenOrder;
+    /** Add tokens in your portfolio, by swapping them from tokens in your wallet */
+    addFromWallet(tokenToAdd: HexString, payWithToken: HexString, slippage: number): TokenOrder;
+
+    /** Withdraw tokens from your portfolio */
+    withdrawToWallet(tokenToWithdraw: HexString): TokenOrder;
+    /** Withdraw tokens from your portfolio, but receive them swapped to another tokens in your wallet */
+    withdrawToWallet(tokenToWithdraw: HexString, receiveInToken: HexString, slippage: number): TokenOrder;
+
+    /** Swap those tokens in your portfolio */
+    swapInPortfolio(tokenToSell: HexString, tokenToBuy: HexString, slippage: number): TokenOrder;
+
+    /** Build call data that can be used to send the transaction to the NestedFacotry contract manually  */
+    buildCallData(): CallData;
+
+    /** Perform the operation */
+    execute(): PromiseLike<ContractReceipt>;
+}
+
 export interface Holding {
     /** Token. Will be 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee... when the wrapped token is the chain's native token (ex: ETH, AVAX, MATIC, ...) */
     readonly token: HexString;
@@ -323,6 +374,10 @@ export interface NestedTools {
     assetContract(): PromiseLike<Contract>;
     /** Fetch a quote from 0x */
     fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
+    /** Gets the factory allowance of a contract for an ERC20 token */
+    factoryAllowance(ofUser: HexString, forToken: HexString): Promise<BigNumber>;
+    /** Approve factory spending for an ERC20 token */
+    approve(token: HexString, amount?: BigNumberish): Promise<ContractTransaction>;
 }
 
 export interface INestedContracts {
@@ -360,6 +415,9 @@ export interface INestedContracts {
      * 👉 The portfolio must contain enough budget to perform the given swaps.
      */
     swapMultiToSingle(portfolioId: PortfolioIdIsh, tokenToBuy: HexString): MultiToSingleSwapper;
+
+    /** Performs a complex operation */
+    complexOperation(porfolioId: PortfolioIdIsh): PortfolioComplexOperation;
 
     /**
      * Smart helper that helps you to add some given budget to the given porfolio,

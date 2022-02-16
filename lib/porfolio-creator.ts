@@ -11,7 +11,7 @@ import {
     PortfolioCreator,
 } from './public-types';
 import fetch from 'node-fetch';
-import { as, BatchedInputOrders, inferNftId } from './utils';
+import { as, BatchedInputOrders, inferNftId, safeMult } from './utils';
 
 export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements PortfolioCreator {
     metadata?: CreatePortfolioMetadata;
@@ -101,6 +101,7 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
     async execute(): Promise<CreatePortfolioResult> {
         // perform the actual transaction
         const callData = this.buildCallData();
+        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
         const tx = await this.parent.signer.sendTransaction(callData);
         await this.attachMetadataToTransaction(tx.hash as HexString);
         const receipt = await tx.wait();

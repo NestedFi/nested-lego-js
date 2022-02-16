@@ -1,6 +1,7 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ZeroXAnswer } from './0x-types';
 import { HexString, Holding, NestedTools, PortfolioSeller, PortfolioTokenAdder } from './public-types';
+import { as, wrap } from './utils';
 
 interface Price {
     /** How much budget... */
@@ -27,18 +28,23 @@ export async function computeDeposit(
     //  (as if we were gonna buy the whole budget for each token)
     const prices = await Promise.all(
         currentHoldings.map(h =>
-            tools
-                .fetch0xSwap({
-                    chain: tools.chain,
-                    buyToken: h.token,
-                    spendToken: addToken,
-                    spendQty: addBudget,
-                    slippage,
-                })
-                .then<Price>(r => ({
-                    pBudget: BigNumber.from(r.sellAmount),
-                    pToken: BigNumber.from(r.buyAmount),
-                })),
+            wrap(tools.chain, addToken) === wrap(tools.chain, h.token)
+                ? as<Price>({
+                      pBudget: addBudget,
+                      pToken: addBudget,
+                  })
+                : tools
+                      .fetch0xSwap({
+                          chain: tools.chain,
+                          buyToken: h.token,
+                          spendToken: addToken,
+                          spendQty: addBudget,
+                          slippage,
+                      })
+                      .then<Price>(r => ({
+                          pBudget: BigNumber.from(r.sellAmount),
+                          pToken: BigNumber.from(r.buyAmount),
+                      })),
         ),
     );
 
@@ -75,18 +81,23 @@ export async function computeWithdrawal(
     //  (as if we were gonna buy the whole budget for each token)
     const prices = await Promise.all(
         currentHoldings.map(h =>
-            tools
-                .fetch0xSwap({
-                    chain: tools.chain,
-                    buyToken: withdrawToken,
-                    spendToken: h.token,
-                    boughtQty: withdrawAmt,
-                    slippage,
-                })
-                .then<Price>(r => ({
-                    pBudget: BigNumber.from(r.buyAmount),
-                    pToken: BigNumber.from(r.sellAmount),
-                })),
+            wrap(tools.chain, withdrawToken) === wrap(tools.chain, h.token)
+                ? as<Price>({
+                      pBudget: withdrawAmt,
+                      pToken: withdrawAmt,
+                  })
+                : tools
+                      .fetch0xSwap({
+                          chain: tools.chain,
+                          buyToken: withdrawToken,
+                          spendToken: h.token,
+                          boughtQty: withdrawAmt,
+                          slippage,
+                      })
+                      .then<Price>(r => ({
+                          pBudget: BigNumber.from(r.buyAmount),
+                          pToken: BigNumber.from(r.sellAmount),
+                      })),
         ),
     );
 

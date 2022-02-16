@@ -1,5 +1,6 @@
 import {
     Chain,
+    PortfolioComplexOperation,
     CreatePortfolioMetadata,
     FeesClaimer,
     INestedContracts,
@@ -28,6 +29,7 @@ import { PortfolioSellerImpl } from './porfolio-seller';
 import { FeesClaimerImpl } from './fees-claimer';
 import { PorfolioSenderImpl } from './porfolio-sender';
 import { computeDeposit, computeWithdrawal } from './budget-computer';
+import { PortfolioComplexOperationImpl } from './portfolio-complex-operation';
 
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
@@ -138,5 +140,10 @@ export class NestedContractsInstance implements INestedContracts {
     transferPorfolioTo(portfolioId: PortfolioIdIsh, to: HexString, from?: HexString): PorfolioSender {
         const id = inferNftId(portfolioId, this.chain);
         return new PorfolioSenderImpl(this, from, to, id);
+    }
+
+    complexOperation(portfolioId: PortfolioIdIsh): PortfolioComplexOperation {
+        const id = inferNftId(portfolioId, this.chain);
+        return new PortfolioComplexOperationImpl(this, id);
     }
 }

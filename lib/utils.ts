@@ -217,3 +217,20 @@ export function inferNftId(portfolioId: PortfolioIdIsh, expectedChain: Chain): B
 export function as<T>(value: T): T {
     return value;
 }
+
+export function groupBy<T, K>(values: T[], getKey: (value: T) => K): Map<K, T[]> {
+    const ret = new Map<K, T[]>();
+    for (const v of values) {
+        const k = getKey(v);
+        let col = ret.get(k);
+        if (!col) {
+            ret.set(k, (col = []));
+        }
+        col.push(v);
+    }
+    return ret;
+}
+
+export function sumBn(values: BigNumber[]) {
+    return values.reduce((acc, val) => acc.add(val), BigNumber.from(0));
+}
