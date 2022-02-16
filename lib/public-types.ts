@@ -207,6 +207,9 @@ export interface PortfolioTokenAdder extends CanAddTokensOperation {
 export type TokenLiquidator = Omit<TokenOrder, 'changeBudgetAmount' | 'remove'>;
 
 export interface PortfolioLiquidator {
+    /** List of current orders in this liquidation */
+    readonly orders: readonly TokenLiquidator[];
+
     /** Budget token that will be spent from your wallet */
     readonly receivedToken: HexString;
 
