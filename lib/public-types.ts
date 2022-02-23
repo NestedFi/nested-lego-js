@@ -174,7 +174,7 @@ export interface PortfolioCreator extends CanAddTokensOperation {
      * Attach the metdata that were given to this transaction hash.
      * To be executed as soon as you have a transaction hash (BEFORE the transaction is fully processed)
      */
-    attachMetadataToTransaction(transactionHash: HexString): PromiseLike<void>;
+    attachMetadataToTransaction(transactionHash: HexString, nonce: number): PromiseLike<void>;
 
     /** Perform the operation */
     execute(): PromiseLike<CreatePortfolioResult>;
