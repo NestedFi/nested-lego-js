@@ -65,7 +65,8 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
         };
     }
 
-    async attachMetadataToTransaction(transactionHash: HexString): Promise<void> {
+    async attachMetadataToTransaction(transactionHash: HexString, transactionNonce: number): Promise<void> {
+        const owner = (await this.parent.signer.getAddress()) as HexString;
         if (!this.metadata?.name && !this.metadata?.tags) {
             return;
         }
@@ -84,6 +85,8 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
                         tags: this.metadata?.tags ?? [],
                     },
                     tx: `${this.parent.chain}:${transactionHash}`,
+                    owner: `${this.parent.chain}:${owner}`,
+                    nonce: transactionNonce,
                 },
             }),
         });
@@ -103,7 +106,7 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
         const callData = this.buildCallData();
         callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
         const tx = await this.parent.signer.sendTransaction(callData);
-        await this.attachMetadataToTransaction(tx.hash as HexString);
+        await this.attachMetadataToTransaction(tx.hash as HexString, tx.nonce as number);
         const receipt = await tx.wait();
         return this.parent.tools.readTransactionLogs(receipt, 'NftCreated');
     }
