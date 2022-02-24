@@ -76,8 +76,8 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                query: `mutation SetTempMeta($tx: ChainAddress!, $meta: NftMetaInput!) {
-                    setMetadata(meta: $meta, tx: $tx)
+                query: `mutation SetTempMeta($tx: ChainAddress!, $meta: NftMetaInput!, $owner: ChainAddress!, $nonce: Float!) {
+                    setMetadata(meta: $meta, tx: $tx, owner: $owner, nonce: $nonce)
                   }`,
                 variables: {
                     meta: {
