@@ -66,4 +66,6 @@ export interface ZeroXAnswer {
     allowanceTarget: HexString;
     sellTokenToEthRate: 1;
     buyTokenToEthRate: string;
+    /** Estimated price impact in % (ie: 10 for 10%) */
+    estimatedPriceImpact: number;
 }
