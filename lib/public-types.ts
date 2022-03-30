@@ -91,6 +91,9 @@ export interface TokenOrder {
     /** Total fees that will be paid back to the Nested protocol */
     readonly fees: TokenOrderFees;
 
+    /** Estimated price impact of the current swap on the liquidity pool */
+    readonly estimatedPriceImpact: number;
+
     /**
      * Change the budget allocated to buying this token
      * @returns true if change was successful, false if it will be overridden by a later call that has been performed concurrently
@@ -497,13 +500,16 @@ export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;
 export const ZERO_ADDRESS: HexString = '0x0000000000000000000000000000000000000000';
 export const NATIVE_TOKEN: HexString = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
-export type QuoteFailedErrorReason = 'INSUFFICIENT_ASSET_LIQUIDITY';
+export enum QuoteErrorReasons {
+    INSUFFICIENT_ASSET_LIQUIDITY = 'INSUFFICIENT_ASSET_LIQUIDITY',
+    UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+}
 
 export class QuoteFailedError extends Error {
-    reason: QuoteFailedErrorReason;
+    reason: QuoteErrorReasons;
 
-    constructor(message: QuoteFailedErrorReason) {
+    constructor(message: QuoteErrorReasons) {
         super(message);
-        this.reason = message ?? 'UNKNOWN_ERROR';
+        this.reason = message ?? QuoteErrorReasons.UNKNOWN_ERROR;
     }
 }
