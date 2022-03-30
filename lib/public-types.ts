@@ -8,6 +8,7 @@ import type {
     Signer,
     utils,
 } from 'ethers';
+import { QuoteFailedErrorCodes } from './0x';
 import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
 export enum Chain {
@@ -496,3 +497,17 @@ export type PortfolioIdIsh = HexString | ChainAndId | BigNumber;
 
 export const ZERO_ADDRESS: HexString = '0x0000000000000000000000000000000000000000';
 export const NATIVE_TOKEN: HexString = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+
+export type QuoteFailedErrorReason = 'INSUFFICIENT_ASSET_LIQUIDITY';
+
+export class QuoteFailedError extends Error {
+    code: number;
+    reason: QuoteFailedErrorReason;
+
+    constructor(message: QuoteFailedErrorReason) {
+        super(message);
+
+        this.code = QuoteFailedErrorCodes[message] ?? 0;
+        this.reason = message ?? 'UNKNOWN_ERROR';
+    }
+}
