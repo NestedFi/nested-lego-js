@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { Chain, QuoteFailedError } from './public-types';
+import { Chain, QuoteErrorReasons, QuoteFailedError } from './public-types';
 import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 import { ZeroExRequest, ZeroXAnswer } from './0x-types';
@@ -73,8 +73,8 @@ export async function defaultZeroExFetcher(
         if (response.status === 400) {
             try {
                 const errs = json?.validationErrors as { field: string; code: number; reason: string }[];
-                if (errs.find(e => e?.code === ZeroXErrorCodes['INSUFFICIENT_ASSET_LIQUIDITY'])) {
-                    throw new QuoteFailedError('INSUFFICIENT_ASSET_LIQUIDITY');
+                if (errs.find(e => e?.code === ZeroXErrorCodes[QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY])) {
+                    throw new QuoteFailedError(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
                 }
             } catch (e) {
                 if (e instanceof QuoteFailedError) {
@@ -86,7 +86,7 @@ export async function defaultZeroExFetcher(
 
         // other rerror
         if (!response.ok) {
-            const error = json?.validationErrors?.[0].reason || 'Unkonwn error';
+            const error = json?.validationErrors?.[0].reason || QuoteErrorReasons.UNKNOWN_ERROR;
             throw new Error(`Failed to fetch 0x quote: ${error} while fetching ${url} (${response.status})`);
         }
         if (!json) {

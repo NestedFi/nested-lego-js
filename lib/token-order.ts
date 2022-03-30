@@ -16,6 +16,7 @@ export class TokenOrderImpl implements _TokenOrder {
     price!: number;
     guaranteedPrice!: number;
     fees!: TokenOrderFees;
+    estimatedPriceImpact: number = 0;
 
     constructor(
         private parent: _HasOrder,
@@ -266,6 +267,7 @@ export class TokenOrderImpl implements _TokenOrder {
                                 ['bytes', zxQuote.data],
                             ],
                         );
+                        this.estimatedPriceImpact = parseFloat(zxQuote.estimatedPriceImpact);
                         resolve(true);
                     } catch (e) {
                         reject(e);
