@@ -4,7 +4,7 @@ import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 import { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
-export enum QuoteFailedErrorCodes {
+export enum ZeroXErrorCodes {
     'INSUFFICIENT_ASSET_LIQUIDITY' = 1004,
 }
 
@@ -73,7 +73,7 @@ export async function defaultZeroExFetcher(
         if (response.status === 400) {
             try {
                 const errs = json?.validationErrors as { field: string; code: number; reason: string }[];
-                if (errs.find(e => e?.code === QuoteFailedErrorCodes['INSUFFICIENT_ASSET_LIQUIDITY'])) {
+                if (errs.find(e => e?.code === ZeroXErrorCodes['INSUFFICIENT_ASSET_LIQUIDITY'])) {
                     throw new QuoteFailedError('INSUFFICIENT_ASSET_LIQUIDITY');
                 }
             } catch (e) {
