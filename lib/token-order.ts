@@ -2,7 +2,9 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees } from './public-types';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { addFees, buildOrderStruct, NestedOrder, normalize, removeFees, safeMult, wrap } from './utils';
+
 type QChangeResult = 'changed' | 'unchanged' | 'race';
+
 export class TokenOrderImpl implements _TokenOrder {
     private qtySetter: PromiseLike<QChangeResult> | null = null;
     private pendingQuotation: PromiseLike<boolean> | null = null;

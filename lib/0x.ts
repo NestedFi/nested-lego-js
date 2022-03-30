@@ -1,8 +1,12 @@
 import { BigNumber } from 'ethers';
-import { Chain } from './public-types';
+import { Chain, QuoteFailedError } from './public-types';
 import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 import { ZeroExRequest, ZeroXAnswer } from './0x-types';
+
+export enum ZeroXErrorCodes {
+    'INSUFFICIENT_ASSET_LIQUIDITY' = 1004,
+}
 
 function zxQuoteUrl(config: ZeroExRequest, _zeroExUrl: ((chain: Chain) => string) | undefined): string {
     const endpoint = (_zeroExUrl ?? zxEndpoint)(config.chain);
@@ -63,6 +67,21 @@ export async function defaultZeroExFetcher(
             json = await response.json();
         } catch (e) {
             // nop !
+        }
+
+        // 400: validation failed. A problem with our inputs
+        if (response.status === 400) {
+            try {
+                const errs = json?.validationErrors as { field: string; code: number; reason: string }[];
+                if (errs.find(e => e?.code === ZeroXErrorCodes['INSUFFICIENT_ASSET_LIQUIDITY'])) {
+                    throw new QuoteFailedError('INSUFFICIENT_ASSET_LIQUIDITY');
+                }
+            } catch (e) {
+                if (e instanceof QuoteFailedError) {
+                    throw e;
+                }
+                // else do nothing, will be handled below
+            }
         }
 
         // other rerror
