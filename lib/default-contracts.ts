@@ -14,7 +14,7 @@ export const FIXED_FEE = 0.01;
 export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig } = {
     eth: {
         providerConfig: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-        factoryAddress: null, // To fill when contract is deployed
+        factoryAddress: null,
         wrappedToken: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
         chainId: 1,
     },
