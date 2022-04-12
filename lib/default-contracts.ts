@@ -36,6 +36,24 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
         wrappedToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         chainId: 137,
     },
+    opti: {
+        providerConfig: 'https://mainnet.optimism.io',
+        factoryAddress: null,
+        wrappedToken: '0x4200000000000000000000000000000000000006',
+        chainId: 10,
+    },
+    ftm: {
+        providerConfig: 'https://rpcapi.fantom.network',
+        factoryAddress: null,
+        wrappedToken: '0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83',
+        chainId: 250,
+    },
+    celo: {
+        providerConfig: 'https://forno.celo.org',
+        factoryAddress: null,
+        wrappedToken: '0x471ece3750da237f93b8e339c536989b8978a438',
+        chainId: 42220,
+    },
     // Ropsten config
     rop: {
         providerConfig: 'ropsten',

@@ -16,6 +16,9 @@ export enum Chain {
     rop = 'rop',
     avax = 'avax',
     poly = 'poly',
+    opti = 'opti',
+    ftm = 'ftm',
+    celo = 'celo',
 }
 export type HexString = `0x${string}`;
 export type HexNumber = `${'' | '-'}${HexString}`;
