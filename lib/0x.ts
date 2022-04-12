@@ -30,8 +30,12 @@ function zxEndpoint(chain: Chain) {
             return 'https://avalanche.api.0x.org/';
         case Chain.poly:
             return 'https://polygon.api.0x.org/';
-        // case Chain.celo:
-        //     return 'https://celo.api.0x.org/';
+        case Chain.opti:
+            return 'https://optimism.api.0x.org/';
+        case Chain.ftm:
+            return 'https://fantom.api.0x.org/';
+        case Chain.celo:
+            return 'https://celo.api.0x.org/';
         default:
             throw unreachable(chain);
     }
