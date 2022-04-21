@@ -38,7 +38,7 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
     },
     opti: {
         providerConfig: 'https://mainnet.optimism.io',
-        factoryAddress: null,
+        factoryAddress: '0x9A065e500CDCd01c0a506B0EB1A8B060B0cE1379',
         wrappedToken: '0x4200000000000000000000000000000000000006',
         chainId: 10,
     },
