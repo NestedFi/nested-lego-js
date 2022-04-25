@@ -54,13 +54,6 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
         wrappedToken: '0x471ece3750da237f93b8e339c536989b8978a438',
         chainId: 42220,
     },
-    // Ropsten config
-    rop: {
-        providerConfig: 'ropsten',
-        factoryAddress: null,
-        wrappedToken: null,
-        chainId: null,
-    },
 };
 
 export const chainByChainId: Record<number, Chain> = Object.fromEntries(
