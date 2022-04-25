@@ -22,8 +22,6 @@ function zxEndpoint(chain: Chain) {
     switch (chain) {
         case Chain.eth:
             return 'https://api.0x.org/';
-        case Chain.rop:
-            return 'https://ropsten.api.0x.org/';
         case Chain.bsc:
             return 'https://bsc.api.0x.org/';
         case Chain.avax:
