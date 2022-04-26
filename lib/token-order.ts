@@ -17,6 +17,7 @@ export class TokenOrderImpl implements _TokenOrder {
     guaranteedPrice!: number;
     fees!: TokenOrderFees;
     estimatedPriceImpact: number = 0;
+    private feesRate!: number;
 
     constructor(
         private parent: _HasOrder,
@@ -125,6 +126,11 @@ export class TokenOrderImpl implements _TokenOrder {
         return (this.qtySetter = tokenFetch);
     }
 
+    private async _getFeesRate(): Promise<number> {
+        const feesRates = await this.parent.tools.feesRates();
+        return this.actionType === 'entry' ? feesRates.entry : feesRates.exit;
+    }
+
     async changeSlippage(slippage: number): Promise<boolean> {
         if (this.slippage === slippage) {
             return Promise.resolve(true);
@@ -136,18 +142,21 @@ export class TokenOrderImpl implements _TokenOrder {
         return await this.refresh();
     }
 
-    refresh(): PromiseLike<boolean> {
+    async refresh(): Promise<boolean> {
         if (this.fixedQty.isZero()) {
             this.reset();
-            return Promise.resolve(true);
+            return true;
         }
+
+        this.feesRate = await this._getFeesRate();
+
         if (wrap(this.chain, this.outputToken) === wrap(this.chain, this.inputToken)) {
             // when the input is the same as the output, use the flat operator
             this._prepareFlat();
-            return Promise.resolve(true);
+            return true;
         } else {
             // else, use 0x to perform a swap
-            return this._prepare0xSwap();
+            return await this._prepare0xSwap();
         }
     }
 
@@ -170,13 +179,13 @@ export class TokenOrderImpl implements _TokenOrder {
     private _prepareFlat() {
         let transfer: BigNumber;
         if (this.fixedAmount === 'input') {
-            transfer = this.feesOn === 'input' ? removeFees(this.inputQty, this.actionType) : this.inputQty;
+            transfer = this.feesOn === 'input' ? removeFees(this.inputQty, this.feesRate) : this.inputQty;
             this.outputQty = this.inputQty;
         } else {
-            transfer = this.feesOn === 'output' ? removeFees(this.outputQty, this.actionType) : this.outputQty;
+            transfer = this.feesOn === 'output' ? removeFees(this.outputQty, this.feesRate) : this.outputQty;
             this.inputQty = this.outputQty;
         }
-        this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.actionType)));
+        this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.feesRate)));
         this.pendingQuotation = null;
         clearTimeout(this.debouncer?.timeout);
         this.debouncer = undefined;
@@ -220,7 +229,7 @@ export class TokenOrderImpl implements _TokenOrder {
                                       //  (we dont want to swap fees)
                                       spendQty:
                                           this.feesOn === 'input'
-                                              ? removeFees(this.inputQty, this.actionType)
+                                              ? removeFees(this.inputQty, this.feesRate)
                                               : this.inputQty,
                                   }
                                 : {
@@ -246,14 +255,14 @@ export class TokenOrderImpl implements _TokenOrder {
                             input = safeMult(input, 1 / (1 - this.slippage));
 
                             // add fees on input if necessary
-                            this.inputQty = this.feesOn === 'input' ? addFees(input, this.actionType) : input;
+                            this.inputQty = this.feesOn === 'input' ? addFees(input, this.feesRate) : input;
                         }
 
                         // === compute fees that will be taken on this order
                         if (this.feesOn === 'input') {
-                            this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.actionType)));
+                            this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.feesRate)));
                         } else {
-                            this.setFees(this.outputQty.sub(removeFees(this.outputQty, this.actionType)));
+                            this.setFees(this.outputQty.sub(removeFees(this.outputQty, this.feesRate)));
                         }
 
                         this.pendingQuotation = null;

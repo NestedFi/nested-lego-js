@@ -380,6 +380,8 @@ export interface NestedTools {
     feeSplitterContract(): PromiseLike<Contract>;
     /** Gets the NestedAsset contract */
     assetContract(): PromiseLike<Contract>;
+    /** Gets fees rate from Factory contract*/
+    feesRates(): PromiseLike<{ entry: number; exit: number }>;
     /** Fetch a quote from 0x */
     fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
     /** Gets the factory allowance of a contract for an ERC20 token */
