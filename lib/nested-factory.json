@@ -30,6 +30,11 @@
                 "internalType": "address",
                 "name": "_operatorResolver",
                 "type": "address"
+            },
+            {
+                "internalType": "contract Withdrawer",
+                "name": "_withdrawer",
+                "type": "address"
             }
         ],
         "stateMutability": "nonpayable",
@@ -64,6 +69,32 @@
             }
         ],
         "name": "CacheUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "entryFees",
+                "type": "uint256"
+            }
+        ],
+        "name": "EntryFeesUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "exitFees",
+                "type": "uint256"
+            }
+        ],
+        "name": "ExitFeesUpdated",
         "type": "event"
     },
     {
@@ -296,6 +327,32 @@
         "name": "destroy",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "entryFees",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "exitFees",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -668,6 +725,32 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_entryFees",
+                "type": "uint256"
+            }
+        ],
+        "name": "setEntryFees",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_exitFees",
+                "type": "uint256"
+            }
+        ],
+        "name": "setExitFees",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
