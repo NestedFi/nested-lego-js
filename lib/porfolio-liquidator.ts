@@ -46,7 +46,7 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     }
 
     private async _sellToken({ token, amount: qty }: Holding) {
-        const ret = new TokenOrderImpl(this, token, this.receivedToken, this.defaultSlippage, 'output');
+        const ret = new TokenOrderImpl(this, token, this.receivedToken, this.defaultSlippage, 'output', 'exit');
         await ret.setInputAmount(qty);
         return ret;
     }

@@ -9,3 +9,5 @@ export interface _HasOrder extends HasOrders {
 export interface _TokenOrder extends TokenOrder {
     readonly _contractOrder: NestedOrder | null;
 }
+
+export type ActionType = 'entry' | 'exit';

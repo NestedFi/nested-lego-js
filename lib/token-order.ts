@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees } from './public-types';
-import { _HasOrder, _TokenOrder } from './internal-types';
+import { ActionType, _HasOrder, _TokenOrder } from './internal-types';
 import { addFees, buildOrderStruct, NestedOrder, normalize, removeFees, safeMult, wrap } from './utils';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
@@ -24,6 +24,7 @@ export class TokenOrderImpl implements _TokenOrder {
         readonly outputToken: HexString,
         public slippage: number,
         readonly feesOn: 'input' | 'output',
+        readonly actionType: ActionType,
     ) {
         this.inputToken = normalize(this.inputToken);
         this.outputToken = normalize(this.outputToken);
@@ -169,13 +170,13 @@ export class TokenOrderImpl implements _TokenOrder {
     private _prepareFlat() {
         let transfer: BigNumber;
         if (this.fixedAmount === 'input') {
-            transfer = this.feesOn === 'input' ? removeFees(this.inputQty) : this.inputQty;
+            transfer = this.feesOn === 'input' ? removeFees(this.inputQty, this.actionType) : this.inputQty;
             this.outputQty = this.inputQty;
         } else {
-            transfer = this.feesOn === 'output' ? removeFees(this.outputQty) : this.outputQty;
+            transfer = this.feesOn === 'output' ? removeFees(this.outputQty, this.actionType) : this.outputQty;
             this.inputQty = this.outputQty;
         }
-        this.setFees(this.inputQty.sub(removeFees(this.inputQty)));
+        this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.actionType)));
         this.pendingQuotation = null;
         clearTimeout(this.debouncer?.timeout);
         this.debouncer = undefined;
@@ -217,7 +218,10 @@ export class TokenOrderImpl implements _TokenOrder {
                                 ? {
                                       // remove fee from the input amount if necessary
                                       //  (we dont want to swap fees)
-                                      spendQty: this.feesOn === 'input' ? removeFees(this.inputQty) : this.inputQty,
+                                      spendQty:
+                                          this.feesOn === 'input'
+                                              ? removeFees(this.inputQty, this.actionType)
+                                              : this.inputQty,
                                   }
                                 : {
                                       boughtQty: this.outputQty,
@@ -242,14 +246,14 @@ export class TokenOrderImpl implements _TokenOrder {
                             input = safeMult(input, 1 / (1 - this.slippage));
 
                             // add fees on input if necessary
-                            this.inputQty = this.feesOn === 'input' ? addFees(input) : input;
+                            this.inputQty = this.feesOn === 'input' ? addFees(input, this.actionType) : input;
                         }
 
                         // === compute fees that will be taken on this order
                         if (this.feesOn === 'input') {
-                            this.setFees(this.inputQty.sub(removeFees(this.inputQty)));
+                            this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.actionType)));
                         } else {
-                            this.setFees(this.outputQty.sub(removeFees(this.outputQty)));
+                            this.setFees(this.outputQty.sub(removeFees(this.outputQty, this.actionType)));
                         }
 
                         this.pendingQuotation = null;
