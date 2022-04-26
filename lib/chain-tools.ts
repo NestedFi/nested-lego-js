@@ -31,6 +31,12 @@ export class ChainTools implements NestedTools {
         return this.signer ? ret.connect(this.signer) : ret;
     });
 
+    feesRates = lazy(async () => {
+        const entryFees = (await this.factoryContract.entryFees()).toNumber() / 10000;
+        const exitFees = (await this.factoryContract.exitFees()).toNumber() / 10000;
+        return { entry: entryFees, exit: exitFees };
+    });
+
     private _tokensAnon = new Map<HexString, Contract>();
     private _tokensSigned = new Map<HexString, Contract>();
 

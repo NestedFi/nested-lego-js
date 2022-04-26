@@ -1,6 +1,6 @@
 import { BigNumber, Signer, utils } from 'ethers';
 import w3utils, { isBigNumber } from 'web3-utils';
-import { defaultContracts, ENTRY_FEE, EXIT_FEE } from './default-contracts';
+import { defaultContracts } from './default-contracts';
 import { Chain, HexString, NATIVE_TOKEN, PortfolioIdIsh } from './public-types';
 import { promisify, callbackify } from 'util';
 // @ts-ignore
@@ -109,18 +109,12 @@ export function safeMult(bn: BigNumber, ratio: number): BigNumber {
     return bn.mul(ratioWithPrecision).div(factor);
 }
 
-export function removeFees(amt: BigNumber, feeType: ActionType) {
-    // TO DO remove console logs used for testing
-    console.log('Amount: ', amt.toString());
-    console.log('Without fees: ', safeMult(amt, 1 - (feeType === 'entry' ? ENTRY_FEE : EXIT_FEE)).toString());
-    return safeMult(amt, 1 - (feeType === 'entry' ? ENTRY_FEE : EXIT_FEE));
+export function removeFees(amt: BigNumber, feesRate: number) {
+    return safeMult(amt, 1 - feesRate);
 }
 
-export function addFees(amt: BigNumber, feeType: ActionType) {
-    // TO DO remove console logs used for testing
-    console.log('Amount: ', amt.toString());
-    console.log('With fees: ', safeMult(amt, 1 / (feeType === 'entry' ? ENTRY_FEE : EXIT_FEE)).toString());
-    return safeMult(amt, 1 / (feeType === 'entry' ? ENTRY_FEE : EXIT_FEE));
+export function addFees(amt: BigNumber, feesRate: number) {
+    return safeMult(amt, 1 / feesRate);
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {
