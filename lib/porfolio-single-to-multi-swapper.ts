@@ -16,7 +16,7 @@ export class SingleToMultiSwapperImpl extends HasOrdersImpl implements SingleToM
         if (token === this.spentToken) {
             throw new Error('You cannot swap a token to itself');
         }
-        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input');
+        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input', 'entry');
         this._orders.push(ret);
         return ret;
     }

@@ -40,7 +40,7 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
         if (this._orders.some(x => x.outputToken === token)) {
             throw new Error(`An order already exists in this operation for token ${token}`);
         }
-        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input');
+        const ret = new TokenOrderImpl(this, this.spentToken, token, slippage, 'input', 'entry');
         this._orders.push(ret);
         return ret;
     }

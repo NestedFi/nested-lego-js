@@ -8,7 +8,9 @@ export interface ConnectionConfig {
     chainId: number | null;
 }
 
-export const FIXED_FEE = 0.01;
+// TO DO read from contract ?
+export const ENTRY_FEE = 0.003;
+export const EXIT_FEE = 0.008;
 
 /** Last version of the nested factory that has been deployed */
 export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig } = {

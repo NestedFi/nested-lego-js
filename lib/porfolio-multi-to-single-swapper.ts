@@ -16,7 +16,7 @@ export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSi
         if (sellToken === this.toToken) {
             throw new Error('You cannot swap a token to itself');
         }
-        const ret = new TokenOrderImpl(this, sellToken, this.toToken, slippage, 'output');
+        const ret = new TokenOrderImpl(this, sellToken, this.toToken, slippage, 'output', 'entry');
         this._orders.push(ret);
         return ret;
     }

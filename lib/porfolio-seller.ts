@@ -16,7 +16,7 @@ export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSelle
         if (this._orders.some(x => x.inputToken === token)) {
             throw new Error(`An input order already exists in this operation for token ${token}`);
         }
-        const ret = new TokenOrderImpl(this, token, this.receivedToken, slippage, 'output');
+        const ret = new TokenOrderImpl(this, token, this.receivedToken, slippage, 'output', 'exit');
         this._orders.push(ret);
         return ret;
     }

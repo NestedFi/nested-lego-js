@@ -82,7 +82,7 @@ export class PortfolioComplexOperationImpl implements PortfolioComplexOperation 
         if (this.deposits.some(x => x.outputToken === tokenToAdd && x.inputToken === payWithToken)) {
             throw new Error(`An input order already exists in this operation: ${tokenToAdd} -> ${payWithToken}`);
         }
-        const ret = new TokenOrderImpl(this._deposits, payWithToken, tokenToAdd, slippage ?? 0, 'input');
+        const ret = new TokenOrderImpl(this._deposits, payWithToken, tokenToAdd, slippage ?? 0, 'input', 'entry');
         this.deposits.push(ret);
         return ret;
     }
@@ -98,7 +98,14 @@ export class PortfolioComplexOperationImpl implements PortfolioComplexOperation 
                 `An output order already exists in this operation: ${tokenToWithdraw} -> ${receiveInToken}`,
             );
         }
-        const ret = new TokenOrderImpl(this._withdrawals, tokenToWithdraw, receiveInToken, slippage ?? 0, 'output');
+        const ret = new TokenOrderImpl(
+            this._withdrawals,
+            tokenToWithdraw,
+            receiveInToken,
+            slippage ?? 0,
+            'output',
+            'exit',
+        );
         this.withdrawals.push(ret);
         return ret;
     }
@@ -114,7 +121,7 @@ export class PortfolioComplexOperationImpl implements PortfolioComplexOperation 
         if (tokenToSell === tokenToBuy) {
             throw new Error('You cannot swap a token to itself');
         }
-        const ret = new TokenOrderImpl(this._swapsImpl, tokenToSell, tokenToBuy, slippage, 'input');
+        const ret = new TokenOrderImpl(this._swapsImpl, tokenToSell, tokenToBuy, slippage, 'input', 'entry');
         this.swaps.push(ret);
         return ret;
     }
