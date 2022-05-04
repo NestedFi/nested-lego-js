@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
-import { HasOrdersImpl } from './has-horders';
+import { ensureSettledOrders, HasOrdersImpl } from './has-horders';
 import { _TokenOrder } from './internal-types';
 import {
     CallData,
@@ -11,17 +11,7 @@ import {
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import {
-    as,
-    BatchedInputOrders,
-    BatchedOutputOrders,
-    groupBy,
-    normalize,
-    notNil,
-    safeMult,
-    sumBn,
-    wrap,
-} from './utils';
+import { as, BatchedInputOrders, BatchedOutputOrders, groupBy, normalize, safeMult, sumBn, wrap } from './utils';
 
 export class PortfolioComplexOperationImpl implements PortfolioComplexOperation {
     readonly deposits: _TokenOrder[] = [];
@@ -127,30 +117,36 @@ export class PortfolioComplexOperationImpl implements PortfolioComplexOperation 
     }
 
     buildCallData(): CallData {
-        const deposits = [...groupBy(this.deposits, x => x.inputToken).entries()].map(([token, orders]) =>
-            as<BatchedInputOrders>({
-                inputToken: token,
-                amount: sumBn(orders.map(x => x.inputQty)),
-                orders: notNil(orders.map(x => x._contractOrder)),
-                fromReserve: false,
-            }),
-        );
-        const swaps = [...groupBy(this.swaps, x => x.inputToken).entries()].map(([token, orders]) =>
-            as<BatchedInputOrders>({
-                inputToken: token,
-                amount: sumBn(orders.map(x => x.inputQty)),
-                orders: notNil(orders.map(x => x._contractOrder)),
-                fromReserve: true,
-            }),
-        );
-        const withdrawals = [...groupBy(this.withdrawals, x => x.outputToken).entries()].map(([token, orders]) =>
-            as<BatchedOutputOrders>({
-                outputToken: wrap(this.parent.chain, token),
-                amounts: orders.map(x => x.inputQty),
-                orders: notNil(orders.map(x => x._contractOrder)),
-                toReserve: false,
-            }),
-        );
+        const deposits = [...groupBy(this.deposits, x => x.inputToken).entries()]
+            .map(([token, orders]) => [token, ensureSettledOrders(orders)] as const)
+            .map(([token, orders]) =>
+                as<BatchedInputOrders>({
+                    inputToken: token,
+                    amount: sumBn(orders.map(x => x.inputQty)),
+                    orders: orders.map(x => x.order),
+                    fromReserve: false,
+                }),
+            );
+        const swaps = [...groupBy(this.swaps, x => x.inputToken).entries()]
+            .map(([token, orders]) => [token, ensureSettledOrders(orders)] as const)
+            .map(([token, orders]) =>
+                as<BatchedInputOrders>({
+                    inputToken: token,
+                    amount: sumBn(orders.map(x => x.inputQty)),
+                    orders: orders.map(x => x.order),
+                    fromReserve: true,
+                }),
+            );
+        const withdrawals = [...groupBy(this.withdrawals, x => x.outputToken).entries()]
+            .map(([token, orders]) => [token, ensureSettledOrders(orders)] as const)
+            .map(([token, orders]) =>
+                as<BatchedOutputOrders>({
+                    outputToken: wrap(this.parent.chain, token),
+                    amounts: orders.map(x => x.inputQty),
+                    orders: orders.map(x => x.order),
+                    toReserve: false,
+                }),
+            );
 
         if (!deposits.length && !swaps.length && !withdrawals.length) {
             throw new Error('Nothing to execute !');
