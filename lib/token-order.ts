@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees } from './public-types';
-import { ActionType, _HasOrder, _TokenOrder } from './internal-types';
+import { ActionType, _HasOrder, _TokenOrder, _TokenOrderData } from './internal-types';
 import { addFees, buildOrderStruct, NestedOrder, normalize, removeFees, safeMult, wrap } from './utils';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
@@ -12,7 +12,7 @@ export class TokenOrderImpl implements _TokenOrder {
     fixedAmount: 'output' | 'input' = 'input';
     inputQty: BigNumber = BigNumber.from(0);
     outputQty = BigNumber.from(0);
-    _contractOrder: NestedOrder | null = null;
+    _contractOrder: _TokenOrderData | null = null;
     price!: number;
     guaranteedPrice!: number;
     fees!: TokenOrderFees;
@@ -189,17 +189,20 @@ export class TokenOrderImpl implements _TokenOrder {
         this.pendingQuotation = null;
         clearTimeout(this.debouncer?.timeout);
         this.debouncer = undefined;
-        this._contractOrder = buildOrderStruct(
-            // specify that we're using the flat operator
-            'Flat',
-            // specify output token for fees computation
-            this.feesToken,
-            // see Flat operator implementation:
-            [
-                ['address', wrap(this.chain, this.inputToken)],
-                ['uint256', transfer],
-            ],
-        );
+        this._contractOrder = {
+            inputQty: this.inputQty,
+            order: buildOrderStruct(
+                // specify that we're using the flat operator
+                'Flat',
+                // specify output token for fees computation
+                this.feesToken,
+                // see Flat operator implementation:
+                [
+                    ['address', wrap(this.chain, this.inputToken)],
+                    ['uint256', transfer],
+                ],
+            ),
+        };
 
         this.price = 1;
         this.guaranteedPrice = 1;
@@ -268,18 +271,21 @@ export class TokenOrderImpl implements _TokenOrder {
                         this.pendingQuotation = null;
                         this.price = parseFloat(zxQuote.price);
                         this.guaranteedPrice = parseFloat(zxQuote.guaranteedPrice);
-                        this._contractOrder = buildOrderStruct(
-                            // specify that we're using the 0x operator
-                            'ZeroEx',
-                            // specify output token
-                            this.feesToken,
-                            // see ZeroEx operator implementation:
-                            [
-                                ['address', wrap(this.chain, this.inputToken)],
-                                ['address', wrap(this.chain, this.outputToken)],
-                                ['bytes', zxQuote.data],
-                            ],
-                        );
+                        this._contractOrder = {
+                            inputQty: this.inputQty,
+                            order: buildOrderStruct(
+                                // specify that we're using the 0x operator
+                                'ZeroEx',
+                                // specify output token
+                                this.feesToken,
+                                // see ZeroEx operator implementation:
+                                [
+                                    ['address', wrap(this.chain, this.inputToken)],
+                                    ['address', wrap(this.chain, this.outputToken)],
+                                    ['bytes', zxQuote.data],
+                                ],
+                            ),
+                        };
                         this.estimatedPriceImpact = parseFloat(zxQuote.estimatedPriceImpact);
                         resolve(true);
                     } catch (e) {

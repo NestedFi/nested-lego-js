@@ -1,13 +1,21 @@
 import { BigNumber } from 'ethers';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import { INestedContracts, TokenOrder } from './public-types';
-import { NestedOrder, notNil, sumBn } from './utils';
+import { NestedOrder, notNil, nullish, sumBn } from './utils';
+
+export function ensureSettledOrders(orders: readonly _TokenOrder[]) {
+    const ret = orders.map(x => x._contractOrder);
+    if (ret.some(x => nullish(x))) {
+        throw new Error('Operation is not yet ready (an order is still loading, or errored)');
+    }
+    return notNil(ret);
+}
 
 export class HasOrdersImpl implements _HasOrder {
     _contractOrder!: NestedOrder;
 
     protected get _ordersData(): NestedOrder[] {
-        return notNil(this._orders.map(x => x._contractOrder));
+        return ensureSettledOrders(this._orders).map(x => x.order);
     }
 
     get orders(): readonly TokenOrder[] {
@@ -15,7 +23,7 @@ export class HasOrdersImpl implements _HasOrder {
     }
 
     get totalBudget(): BigNumber {
-        return sumBn(this.orders.map(b => b.inputQty));
+        return sumBn(ensureSettledOrders(this._orders).map(b => b.inputQty));
     }
 
     _removeOrder(order: _TokenOrder) {
