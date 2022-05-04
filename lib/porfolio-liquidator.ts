@@ -53,7 +53,7 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
 
     buildCallData(): CallData {
         // here, we ignore the orders that have failed to compute a swap
-        // in order to be able to liquidate poroflios that contain illiquid assets
+        // in order to be able to liquidate portfolios that contain illiquid assets
         //  ... smartcontracts will send all remaining assets after swaps to the wallet.
         const ordersData = notNil(this.orders.map(x => x._contractOrder?.order));
         return {
