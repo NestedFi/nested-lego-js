@@ -3,6 +3,7 @@ import { Chain, QuoteErrorReasons, QuoteFailedError } from './public-types';
 import { rateLimit, unreachable, wrap } from './utils';
 import fetch from 'node-fetch';
 import { ZeroExRequest, ZeroXAnswer } from './0x-types';
+import { AggregatorQuoteResponse } from './dex-aggregator-types';
 
 export enum ZeroXErrorCodes {
     'INSUFFICIENT_ASSET_LIQUIDITY' = 1004,
@@ -100,4 +101,12 @@ export async function defaultZeroExFetcher(
         }
         return json;
     }
+}
+
+// convert from the 0x specific quote response to a more generic dex aggregator response type
+export function ZeroExRespToQuoteResp(answer: ZeroXAnswer): AggregatorQuoteResponse {
+    return {
+        aggregator: 'ZeroEx',
+        ...answer,
+    };
 }

@@ -15,7 +15,10 @@ import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import feeSplitterAbi from './nested-fee-splitter.json';
 import assetAbi from './nested-asset.json';
-import { defaultZeroExFetcher } from './0x';
+import { defaultZeroExFetcher, ZeroExRespToQuoteResp } from './0x';
+import { defaultParaSwapFetcher, paraSwapRespToQuoteResp } from './paraswap';
+import { ParaSwapAnswer, ParaSwapFetcher } from './paraswap-types';
+import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 
 const decimals = new Map<string, Promise<number>>();
 
@@ -57,6 +60,7 @@ export class ChainTools implements NestedTools {
         readonly factoryContract: Contract,
         readonly _fetch0xSwap: ZeroExFetcher | undefined,
         readonly _zeroExUrl: ((chain: Chain) => string) | undefined,
+        readonly _fetchParaSwap: ParaSwapFetcher | undefined,
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
     ) {
@@ -176,5 +180,42 @@ export class ChainTools implements NestedTools {
             return defaultZeroExFetcher(toFetch, this._zeroExUrl);
         }
         return this._fetch0xSwap(toFetch);
+    }
+
+    fetchParaSwap(request: AggregatorRequest): Promise<ParaSwapAnswer> {
+        const toFetch: AggregatorRequest = {
+            ...request,
+            buyToken: wrap(this.chain, request.buyToken),
+            spendToken: wrap(this.chain, request.spendToken),
+        };
+        if (!this._fetchParaSwap) {
+            return defaultParaSwapFetcher(toFetch);
+        }
+        return this._fetchParaSwap(toFetch);
+    }
+
+    async fetchLowestQuote(request: AggregatorRequest): Promise<AggregatorQuoteResponse> {
+        const [quote0x, quoteParaSwap] = await Promise.allSettled([
+            this.fetch0xSwap(request),
+            this.fetchParaSwap(request),
+        ]);
+
+        // if one of the 2 aggregators failed, use the other one
+        if (quote0x.status === 'rejected' && quoteParaSwap.status === 'rejected') {
+            throw new Error(`all dex aggregators returned an error: ${quoteParaSwap.reason}, ${quote0x.reason}`);
+        } else if (quote0x.status === 'rejected') {
+            return paraSwapRespToQuoteResp((quoteParaSwap as PromiseFulfilledResult<any>).value);
+        } else if (quoteParaSwap.status === 'rejected') {
+            return ZeroExRespToQuoteResp(quote0x.value);
+        }
+
+        const buyAmt0x = BigNumber.from(quote0x.value.buyAmount);
+        const buyAmtParaSwap = BigNumber.from(quoteParaSwap.value.priceRoute.destAmount);
+
+        if (buyAmt0x.gte(buyAmtParaSwap)) {
+            return ZeroExRespToQuoteResp(quote0x.value);
+        } else {
+            return paraSwapRespToQuoteResp(quoteParaSwap.value);
+        }
     }
 }

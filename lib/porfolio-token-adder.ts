@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers } from 'ethers';
-import { HasOrdersImpl } from './has-horders';
+import { HasOrdersImpl } from './has-orders';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
     CallData,
