@@ -8,6 +8,7 @@ import { ChainTools } from './chain-tools';
 import { unreachable } from './utils';
 import { ZeroExFetcher } from './0x-types';
 import { inferChainFromId } from './public-utils';
+import { ParaSwapFetcher } from './paraswap-types';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -69,7 +70,9 @@ export type NestedConnection = {
     );
 
 export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<INestedContracts> {
-    let { chain, factoryAddress, provider, signer, zeroExFetcher, zeroExUrl } = await readConfig(_opts);
+    let { chain, factoryAddress, provider, signer, zeroExFetcher, zeroExUrl, paraSwapFetcher } = await readConfig(
+        _opts,
+    );
 
     // build contracts
     let nestedFactory = new ethers.Contract(factoryAddress, factoryAbi, provider);
@@ -88,6 +91,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
         nestedFactory,
         zeroExFetcher,
         zeroExUrl,
+        paraSwapFetcher,
         _opts.nestedFinanceApi ?? 'https://api.nested.finance',
         _opts.nestedFinanceUi ?? 'https://app.nested.fi',
     );
@@ -99,6 +103,7 @@ async function readConfig(_opts: NestedConnection): Promise<{
     chain: Chain;
     zeroExFetcher?: ZeroExFetcher;
     zeroExUrl?: (chain: Chain) => string;
+    paraSwapFetcher?: ParaSwapFetcher;
     signer?: ethers.Signer;
     provider: ethers.providers.Provider;
 }> {

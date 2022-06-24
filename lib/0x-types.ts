@@ -1,4 +1,5 @@
 import type { BigNumber } from 'ethers';
+import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 import type { Chain, HexString } from './public-types';
 
 export type ZeroExRequest = {

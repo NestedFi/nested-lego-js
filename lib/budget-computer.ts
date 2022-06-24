@@ -34,7 +34,7 @@ export async function computeDeposit(
                       pToken: addBudget,
                   })
                 : tools
-                      .fetch0xSwap({
+                      .fetchLowestQuote({
                           chain: tools.chain,
                           buyToken: h.token,
                           spendToken: addToken,
@@ -87,7 +87,7 @@ export async function computeWithdrawal(
                       pToken: withdrawAmt,
                   })
                 : tools
-                      .fetch0xSwap({
+                      .fetchLowestQuote({
                           chain: tools.chain,
                           buyToken: withdrawToken,
                           spendToken: h.token,

@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
-import { ensureSettledOrders, HasOrdersImpl } from './has-horders';
+import { ensureSettledOrders, HasOrdersImpl } from './has-orders';
 import { _TokenOrder } from './internal-types';
 import {
     CallData,

@@ -1,11 +1,12 @@
-import { BigNumber, Signer, utils } from 'ethers';
+import { BigNumber, ethers, Signer, utils } from 'ethers';
 import w3utils, { isBigNumber } from 'web3-utils';
 import { defaultContracts } from './default-contracts';
-import { Chain, HexString, NATIVE_TOKEN, PortfolioIdIsh } from './public-types';
+import { Chain, HexNumber, HexString, NATIVE_TOKEN, PortfolioIdIsh } from './public-types';
 import { promisify, callbackify } from 'util';
 // @ts-ignore
 import limit from 'simple-rate-limiter';
-import { ActionType } from './internal-types';
+
+type nil = null | undefined;
 
 export function unreachable(value: never, message?: string): Error {
     return new Error(message ? message : 'Value was supposed to be unreachable' + value);
@@ -70,6 +71,16 @@ export function buildOrderStruct(operator: string, outToken: HexString, data: [R
     };
 }
 
+export function toNumber(num: ethers.BigNumber | HexNumber, decimals: number): number;
+export function toNumber(num: ethers.BigNumber | HexNumber | nil, decimals: number | nil): number | nil;
+export function toNumber(num: ethers.BigNumber | HexNumber | nil, decimals: number | nil): number | nil {
+    if (nullish(num) || nullish(decimals)) {
+        return null;
+    }
+    const str = ethers.utils.formatUnits(num, decimals);
+    return parseFloat(str);
+}
+
 /**
  * Multiplies a bignumber by a non integer ratio
  *
@@ -107,6 +118,11 @@ export function safeMult(bn: BigNumber, ratio: number): BigNumber {
     const ratioWithPrecision = BigNumber.from(Math.floor(largeRatio));
 
     return bn.mul(ratioWithPrecision).div(factor);
+}
+
+export function divideBigNumbers(a: BigNumber, b: BigNumber, precision = 18): number {
+    const bigResult = a.mul(BigNumber.from(10).pow(precision)).div(b);
+    return toNumber(bigResult, precision);
 }
 
 export function removeFees(amt: BigNumber, feesRate: number) {

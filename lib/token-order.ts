@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { HexString, TokenOrderFees } from './public-types';
+import { HexString, TokenOrderFees, ZERO_ADDRESS } from './public-types';
 import { ActionType, _HasOrder, _TokenOrder, _TokenOrderData } from './internal-types';
-import { addFees, buildOrderStruct, NestedOrder, normalize, removeFees, safeMult, wrap } from './utils';
+import { addFees, buildOrderStruct, normalize, removeFees, safeMult, wrap } from './utils';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
 
@@ -166,7 +166,7 @@ export class TokenOrderImpl implements _TokenOrder {
             return true;
         } else {
             // else, use 0x to perform a swap
-            return await this._prepare0xSwap();
+            return await this._prepareAggregatorSwap();
         }
     }
 
@@ -218,20 +218,28 @@ export class TokenOrderImpl implements _TokenOrder {
         this.guaranteedPrice = 1;
     }
 
-    private _prepare0xSwap(): Promise<boolean> {
+    private async _prepareAggregatorSwap(): Promise<boolean> {
         // debounce 30ms to avoid too many calls to the 0x API
         if (this.debouncer) {
             clearTimeout(this.debouncer.timeout);
             this.debouncer.resolver(false);
             this.debouncer = undefined;
         }
+        let userAddress = ZERO_ADDRESS;
+        try {
+            const signer = this.parent.parent.signer;
+            userAddress = (await signer.getAddress()) as HexString;
+        } catch (err) {
+            // TODO: refactor out this try/catch
+        }
         const op = (this.pendingQuotation = new Promise<boolean>((resolve, reject) => {
             this.debouncer = {
                 resolver: resolve,
                 timeout: setTimeout(async () => {
                     try {
-                        // build the 0x swap order
-                        const zxQuote = await this.parent.tools.fetch0xSwap({
+                        // build the swap order
+                        const aggregatorQuote = await this.parent.tools.fetchLowestQuote({
+                            userAddress,
                             chain: this.chain,
                             slippage: this.slippage,
                             spendToken: wrap(this.chain, this.inputToken),
@@ -258,12 +266,12 @@ export class TokenOrderImpl implements _TokenOrder {
 
                         // === update the target amount
                         if (this.fixedAmount === 'input') {
-                            this.outputQty = BigNumber.from(zxQuote.buyAmount);
+                            this.outputQty = BigNumber.from(aggregatorQuote.buyAmount);
                         } else {
                             // this is how much we are expecting to sell
-                            let input = BigNumber.from(zxQuote.sellAmount);
+                            let input = BigNumber.from(aggregatorQuote.sellAmount);
                             // just add slippage to input amount
-                            // this is necessary to avoid reverts in the 0x swap if the slippage is too high
+                            // this is necessary to avoid reverts in the swap if the slippage is too high
                             // ... but the extra funds will be sent back to the user.
                             input = safeMult(input, 1 / (1 - this.slippage));
 
@@ -279,24 +287,24 @@ export class TokenOrderImpl implements _TokenOrder {
                         }
 
                         this.pendingQuotation = null;
-                        this.price = parseFloat(zxQuote.price);
-                        this.guaranteedPrice = parseFloat(zxQuote.guaranteedPrice);
+                        this.price = parseFloat(aggregatorQuote.price);
+                        this.guaranteedPrice = parseFloat(aggregatorQuote.guaranteedPrice);
                         this._contractOrder = {
                             inputQty: this.inputQty,
                             order: buildOrderStruct(
-                                // specify that we're using the 0x operator
-                                'ZeroEx',
+                                // specify what operator we are using (0x or ParaSwap)
+                                aggregatorQuote.aggregator,
                                 // specify output token
                                 this.feesToken,
                                 // see ZeroEx operator implementation:
                                 [
                                     ['address', wrap(this.chain, this.inputToken)],
                                     ['address', wrap(this.chain, this.outputToken)],
-                                    ['bytes', zxQuote.data],
+                                    ['bytes', aggregatorQuote.data],
                                 ],
                             ),
                         };
-                        this.estimatedPriceImpact = parseFloat(zxQuote.estimatedPriceImpact);
+                        this.estimatedPriceImpact = parseFloat(aggregatorQuote.estimatedPriceImpact);
                         resolve(true);
                     } catch (e) {
                         reject(e);
