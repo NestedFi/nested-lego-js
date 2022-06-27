@@ -102,7 +102,7 @@ export async function defaultZeroExFetcher(
 }
 
 // convert from the 0x specific quote response to a more generic dex aggregator response type
-export function ZeroExRespToQuoteResp(answer: ZeroXAnswer): AggregatorQuoteResponse {
+export function zeroExRespToQuoteResp(answer: ZeroXAnswer): AggregatorQuoteResponse {
     return {
         aggregator: 'ZeroEx',
         ...answer,

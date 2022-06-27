@@ -15,7 +15,7 @@ import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import feeSplitterAbi from './nested-fee-splitter.json';
 import assetAbi from './nested-asset.json';
-import { defaultZeroExFetcher, ZeroExRespToQuoteResp } from './0x';
+import { defaultZeroExFetcher, zeroExRespToQuoteResp } from './0x';
 import { defaultParaSwapFetcher, paraSwapRespToQuoteResp } from './paraswap';
 import { ParaSwapAnswer, ParaSwapFetcher } from './paraswap-types';
 import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
@@ -182,12 +182,20 @@ export class ChainTools implements NestedTools {
         return this._fetch0xSwap(toFetch);
     }
 
-    fetchParaSwap(request: AggregatorRequest): Promise<ParaSwapAnswer> {
+    async fetchParaSwap(request: AggregatorRequest): Promise<ParaSwapAnswer | null> {
         const toFetch: AggregatorRequest = {
             ...request,
             buyToken: wrap(this.chain, request.buyToken),
             spendToken: wrap(this.chain, request.spendToken),
         };
+
+        if (!request.spendTokenDecimals) {
+            toFetch.spendTokenDecimals = await this.getErc20Decimals(request.spendToken);
+        }
+        if (!request.buyTokenDecimals) {
+            toFetch.buyTokenDecimals = await this.getErc20Decimals(request.buyToken);
+        }
+
         if (!this._fetchParaSwap) {
             return defaultParaSwapFetcher(toFetch);
         }
@@ -203,17 +211,25 @@ export class ChainTools implements NestedTools {
         // if one of the 2 aggregators failed, use the other one
         if (quote0x.status === 'rejected' && quoteParaSwap.status === 'rejected') {
             throw new Error(`all dex aggregators returned an error: ${quoteParaSwap.reason}, ${quote0x.reason}`);
+        } else if (
+            quote0x.status === 'rejected' &&
+            quoteParaSwap.status !== 'rejected' &&
+            quoteParaSwap.value === null
+        ) {
+            throw new Error(
+                `all dex aggregators returned an error: 0x: ${quote0x.reason}, paraSwap: unsupported network`,
+            );
         } else if (quote0x.status === 'rejected') {
             return paraSwapRespToQuoteResp((quoteParaSwap as PromiseFulfilledResult<any>).value);
-        } else if (quoteParaSwap.status === 'rejected') {
-            return ZeroExRespToQuoteResp(quote0x.value);
+        } else if (quoteParaSwap.status === 'rejected' || quoteParaSwap.value === null) {
+            return zeroExRespToQuoteResp(quote0x.value);
         }
 
         const buyAmt0x = BigNumber.from(quote0x.value.buyAmount);
         const buyAmtParaSwap = BigNumber.from(quoteParaSwap.value.priceRoute.destAmount);
 
         if (buyAmt0x.gte(buyAmtParaSwap)) {
-            return ZeroExRespToQuoteResp(quote0x.value);
+            return zeroExRespToQuoteResp(quote0x.value);
         } else {
             return paraSwapRespToQuoteResp(quoteParaSwap.value);
         }

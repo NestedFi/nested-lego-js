@@ -8,6 +8,8 @@ import limit from 'simple-rate-limiter';
 
 type nil = null | undefined;
 
+export const ERROR_NO_SIGNER = 'No signer available. Please provide a signer when calling connect()';
+
 export function unreachable(value: never, message?: string): Error {
     return new Error(message ? message : 'Value was supposed to be unreachable' + value);
 }
@@ -188,7 +190,7 @@ export function normalize(str: HexString): HexString {
 
 export function checkHasSigner(signer: Signer | undefined): Signer {
     if (!signer) {
-        throw new Error('No signer available. Please provide a signer when calling connect()');
+        throw new Error(ERROR_NO_SIGNER);
     }
     return signer!;
 }

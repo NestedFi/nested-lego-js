@@ -1,29 +1,22 @@
 import { BigNumber } from 'ethers';
-import { parseEther, parseUnits } from 'ethers/lib/utils';
-import { ParaSwap, APIError, NetworkID, SwapSide } from 'paraswap';
+import { parseUnits } from 'ethers/lib/utils';
+import { ParaSwap, APIError, SwapSide } from 'paraswap';
 import { OptimalRate } from 'paraswap-core';
+import { defaultContracts } from './default-contracts';
 import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 import { ParaSwapAnswer } from './paraswap-types';
 import { Chain, HexString, ZERO_ADDRESS } from './public-types';
 import { divideBigNumbers, safeMult } from './utils';
 
-// TODO: specify decimals in request
-
-export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise<ParaSwapAnswer> {
+export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise<ParaSwapAnswer | null> {
     switch (config.chain) {
         case Chain.celo:
         case Chain.ftm:
         case Chain.opti:
-            throw new Error('Unsupported network for ParaSwap request');
-        default:
+            return null;
     }
 
-    const networkId = {
-        [Chain.eth]: 1,
-        [Chain.bsc]: 56,
-        [Chain.poly]: 137,
-        [Chain.avax]: 43114,
-    }[config.chain] as NetworkID;
+    const networkId = defaultContracts[config.chain].chainId as 1 | 56 | 137 | 43114;
 
     const paraSwap = new ParaSwap(networkId);
     let spendQty = 'spendQty' in config ? config.spendQty : config.boughtQty;
@@ -54,6 +47,8 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         undefined,
         undefined,
         { ignoreChecks: true, ignoreGasEstimate: true },
+        config.spendTokenDecimals,
+        config.buyTokenDecimals,
     );
 
     if ('message' in transaction) {

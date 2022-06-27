@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees, ZERO_ADDRESS } from './public-types';
 import { ActionType, _HasOrder, _TokenOrder, _TokenOrderData } from './internal-types';
-import { addFees, buildOrderStruct, normalize, removeFees, safeMult, wrap } from './utils';
+import { addFees, buildOrderStruct, ERROR_NO_SIGNER, normalize, removeFees, safeMult, wrap } from './utils';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
 
@@ -230,7 +230,10 @@ export class TokenOrderImpl implements _TokenOrder {
             const signer = this.parent.parent.signer;
             userAddress = (await signer.getAddress()) as HexString;
         } catch (err) {
-            // TODO: refactor out this try/catch
+            // if error is "no signer because connect() hasn't been called", just continue with quote
+            if (!(err instanceof Error) || err.message !== ERROR_NO_SIGNER) {
+                throw err;
+            }
         }
         const op = (this.pendingQuotation = new Promise<boolean>((resolve, reject) => {
             this.debouncer = {

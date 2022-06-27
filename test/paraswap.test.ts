@@ -1,3 +1,4 @@
+import { assert } from 'chai';
 import 'mocha';
 import { Chain } from '../lib';
 import { defaultParaSwapFetcher } from '../lib/paraswap';
@@ -12,6 +13,8 @@ describe('Paraswap SDK', () => {
             spendQty: poly_usdc.makeAmount(1),
             slippage: 0.03,
         });
-        console.log(resp);
+        assert.isString(resp?.transaction.to);
+        assert.lengthOf(resp!.transaction.to, 42);
+        assert.isArray(resp?.priceRoute.bestRoute);
     });
 });
