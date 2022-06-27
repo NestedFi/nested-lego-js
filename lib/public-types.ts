@@ -9,8 +9,10 @@ import type {
     utils,
 } from 'ethers';
 import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
-import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
-import { ParaSwapAnswer } from './paraswap-types';
+import type { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
+import type { ParaSwapAnswer } from './paraswap-types';
+
+export { AggregatorRequest, AggregatorQuoteResponse };
 
 export enum Chain {
     eth = 'eth',
@@ -394,7 +396,7 @@ export interface NestedTools {
     /** Fetch a quote from 0x */
     fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
     /** Fetch a quote from ParaSwap */
-    fetchParaSwap(request: AggregatorRequest): PromiseLike<ParaSwapAnswer>;
+    fetchParaSwap(request: AggregatorRequest): PromiseLike<ParaSwapAnswer | null>;
     /** Get most competitive quote from multiple dex aggregators */
     fetchLowestQuote(request: AggregatorRequest): PromiseLike<AggregatorQuoteResponse>;
     /** Gets the factory allowance of a contract for an ERC20 token */

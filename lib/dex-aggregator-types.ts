@@ -15,6 +15,11 @@ export type AggregatorRequest = {
      * Applicable if this order is a swap (if spent & buy token are different) - ignored otherwise.
      */
     readonly slippage: number;
+
+    /** Spend token decimal places (optional)  */
+    spendTokenDecimals?: number;
+    /** Receive token decimal places (optional)  */
+    buyTokenDecimals?: number;
 } & (
     | {
           /** Spent quantity */
