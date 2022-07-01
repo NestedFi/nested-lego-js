@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect, assert } from 'chai';
-import { CanAddTokensOperation, Chain, connect, HexString, INestedContracts } from '../lib';
+import { CanAddTokensOperation, connect, INestedContracts } from '../lib';
 import { native_token, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
 
 describe('Create', () => {
@@ -21,7 +21,7 @@ describe('Create', () => {
 
         // swap USDC for SUSHI
         const ptf = instance.createPortfolio(poly_usdc.contract, {
-            name: 'TEst Portfolio',
+            name: 'Test Portfolio',
             tags: ['test'],
         });
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
@@ -40,7 +40,7 @@ describe('Create', () => {
 
         // swap USDC for SUSHI
         const ptf = instance.createPortfolio(poly_usdc.contract, {
-            name: 'TEst Portfolio',
+            name: 'Test Portfolio',
             tags: ['test'],
         });
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(poly_sushi.smallAmount);

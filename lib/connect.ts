@@ -9,6 +9,7 @@ import { unreachable } from './utils';
 import { ZeroExFetcher } from './0x-types';
 import { inferChainFromId } from './public-utils';
 import { ParaSwapFetcher } from './paraswap-types';
+import { DexAggregator } from './dex-aggregator-types';
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
@@ -24,6 +25,10 @@ export type NestedConnection = {
     nestedFinanceApi?: string;
     /** @deprecated Customize Nested Finance endpoint (for testing purposes only) */
     nestedFinanceUi?: string;
+    /** Provide a custom ParaSwap fetcher (optional) */
+    paraSwapFetcher?: ParaSwapFetcher;
+    /** Exclude dex aggregator */
+    excludeDexAggregators?: DexAggregator[];
 } & (
     | {
           /**
@@ -94,6 +99,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
         paraSwapFetcher,
         _opts.nestedFinanceApi ?? 'https://api.nested.finance',
         _opts.nestedFinanceUi ?? 'https://app.nested.fi',
+        _opts.excludeDexAggregators ?? [],
     );
     return new NestedContractsInstance(chain, tools, signer);
 }
@@ -159,5 +165,6 @@ async function readConfig(_opts: NestedConnection): Promise<{
         provider,
         zeroExFetcher: 'zeroExFetcher' in _opts ? _opts.zeroExFetcher : undefined,
         zeroExUrl: 'zeroExApi' in _opts ? _opts.zeroExApi : undefined,
+        paraSwapFetcher: _opts.paraSwapFetcher,
     } as const;
 }

@@ -9,7 +9,7 @@ import type {
     utils,
 } from 'ethers';
 import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
-import type { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
+import type { AggregatorQuoteResponse, AggregatorRequest, DexAggregator } from './dex-aggregator-types';
 import type { ParaSwapAnswer } from './paraswap-types';
 
 export { AggregatorRequest, AggregatorQuoteResponse };
@@ -102,6 +102,9 @@ export interface TokenOrder {
 
     /** Estimated price impact of the current swap on the liquidity pool */
     readonly estimatedPriceImpact: number;
+
+    /** Operator that will execute the trade (0x or ParaSwap) */
+    readonly operator: DexAggregator | null;
 
     /**
      * Change the budget allocated to buying this token

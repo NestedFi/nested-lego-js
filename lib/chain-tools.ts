@@ -63,6 +63,7 @@ export class ChainTools implements NestedTools {
         readonly _fetchParaSwap: ParaSwapFetcher | undefined,
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
+        readonly excludeDexAggregators: DexAggregator[] = [],
     ) {
         this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
         this.assetInterface = new utils.Interface(assetAbi);
@@ -203,35 +204,40 @@ export class ChainTools implements NestedTools {
     }
 
     async fetchLowestQuote(request: AggregatorRequest): Promise<AggregatorQuoteResponse> {
-        const [quote0x, quoteParaSwap] = await Promise.allSettled([
-            this.fetch0xSwap(request),
-            this.fetchParaSwap(request),
-        ]);
+        const dexAggregators = {
+            ZeroEx: {
+                name: 'ZeroEx' as DexAggregator,
+                fetch: this.fetch0xSwap.bind(this),
+                convertToQuoteResp: zeroExRespToQuoteResp,
+            },
+            ParaSwap: {
+                name: 'ParaSwap' as DexAggregator,
+                fetch: this.fetchParaSwap.bind(this),
+                convertToQuoteResp: paraSwapRespToQuoteResp,
+            },
+        };
 
-        // if one of the 2 aggregators failed, use the other one
-        if (quote0x.status === 'rejected' && quoteParaSwap.status === 'rejected') {
-            throw new Error(`all dex aggregators returned an error: ${quoteParaSwap.reason}, ${quote0x.reason}`);
-        } else if (
-            quote0x.status === 'rejected' &&
-            quoteParaSwap.status !== 'rejected' &&
-            quoteParaSwap.value === null
-        ) {
-            throw new Error(
-                `all dex aggregators returned an error: 0x: ${quote0x.reason}, paraSwap: unsupported network`,
-            );
-        } else if (quote0x.status === 'rejected') {
-            return paraSwapRespToQuoteResp((quoteParaSwap as PromiseFulfilledResult<any>).value);
-        } else if (quoteParaSwap.status === 'rejected' || quoteParaSwap.value === null) {
-            return zeroExRespToQuoteResp(quote0x.value);
+        const dexAggrRequests = Object.values(dexAggregators)
+            .filter(dAggr => !this.excludeDexAggregators.find(name => dAggr.name === name))
+            .map(async dAggr => {
+                const resp = await dAggr.fetch(request);
+                if (!resp) {
+                    return null;
+                }
+                return dAggr.convertToQuoteResp(resp as any);
+            });
+
+        const dexAggrQuotesResp = await Promise.allSettled(dexAggrRequests);
+        const successfulQuotes = dexAggrQuotesResp
+            .filter(resp => resp.status === 'fulfilled' && !!resp.value)
+            .map(resp => (resp as PromiseFulfilledResult<AggregatorQuoteResponse>).value);
+
+        if (successfulQuotes.length === 0) {
+            throw new Error('All DEX aggregators quotes were unsuccessful');
         }
 
-        const buyAmt0x = BigNumber.from(quote0x.value.buyAmount);
-        const buyAmtParaSwap = BigNumber.from(quoteParaSwap.value.priceRoute.destAmount);
-
-        if (buyAmt0x.gte(buyAmtParaSwap)) {
-            return zeroExRespToQuoteResp(quote0x.value);
-        } else {
-            return paraSwapRespToQuoteResp(quoteParaSwap.value);
-        }
+        return successfulQuotes.sort((quoteA, quoteB) =>
+            BigNumber.from(quoteB.buyAmount).gt(BigNumber.from(quoteA.buyAmount)) ? 1 : -1,
+        )[0];
     }
 }
