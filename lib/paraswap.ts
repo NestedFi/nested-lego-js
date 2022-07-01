@@ -19,12 +19,12 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
     const networkId = defaultContracts[config.chain].chainId as 1 | 56 | 137 | 43114;
 
     const paraSwap = new ParaSwap(networkId);
-    let spendQty = 'spendQty' in config ? config.spendQty : config.boughtQty;
+    let amount = 'spendQty' in config ? config.spendQty : config.boughtQty;
     const swapSide = 'spendQty' in config ? SwapSide.SELL : SwapSide.BUY;
     const priceRoute: OptimalRate | APIError = await paraSwap.getRate(
         config.spendToken,
         config.buyToken,
-        spendQty.toString(),
+        amount.toString(),
         config.userAddress,
         swapSide,
         { excludeDEXS: '0x' },
@@ -33,13 +33,16 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         throw new Error(`Failed to fetch ParaSwap quote: ${priceRoute.message} (${priceRoute.status})`);
     }
 
-    const minAmount = safeMult(BigNumber.from(priceRoute.destAmount), 1 - config.slippage);
+    const minAmount = safeMult(
+        BigNumber.from(swapSide === SwapSide.SELL ? priceRoute.destAmount : priceRoute.srcAmount),
+        1 - config.slippage,
+    );
 
     const transaction = await paraSwap.buildTx(
         config.spendToken,
         config.buyToken,
-        spendQty.toString(),
-        minAmount.toString(),
+        priceRoute.srcAmount,
+        priceRoute.destAmount,
         priceRoute,
         config.userAddress ?? ZERO_ADDRESS,
         undefined,
@@ -63,15 +66,13 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
 // convert from the ParaSwap specific quote response to a more generic dex aggregator response type
 export function paraSwapRespToQuoteResp(answer: ParaSwapAnswer): AggregatorQuoteResponse {
     const priceImpact = parseFloat(answer.priceRoute.srcUSD) / parseFloat(answer.priceRoute.destUSD) - 1;
-    const price = divideBigNumbers(
-        BigNumber.from(answer.priceRoute.destAmount),
-        BigNumber.from(answer.priceRoute.srcAmount),
-    );
-
+    const price = BigNumber.from(answer.priceRoute.destAmount)
+        .mul(BigNumber.from(10).pow(answer.priceRoute.srcDecimals))
+        .div(BigNumber.from(answer.priceRoute.srcAmount));
     return {
         aggregator: 'ParaSwap',
         chainId: answer.priceRoute.network,
-        price: parseUnits(price.toString(), answer.priceRoute.srcDecimals).toString(),
+        price: price.toString(),
         to: answer.transaction.to as HexString,
         data: answer.transaction.data as HexString,
         value: answer.transaction.value,

@@ -1,0 +1,179 @@
+{
+    "chainId": 137,
+    "price": "0.455368",
+    "guaranteedPrice": "0.453091",
+    "estimatedPriceImpact": "0",
+    "to": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+    "data": "0x415565b00000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841740000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000006e9e300000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000003a0000000000000000000000000000000000000000000000000000000000000000900000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa84174000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000002c000000000000000000000000000000000000000000000000000000000000002c000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000024d6573685377617000000000000000000000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000006e9e3000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000010f4a785f458bc144e3706575924889954946639000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa84174000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf1270000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee0000000000000000000000000000000000000000000000000000000000000000869584cd00000000000000000000000086003b044f70dac0abc80ac8957305b6370893ed00000000000000000000000000000000000000000000001b368ad12562be2e0c",
+    "value": "0",
+    "gas": "538668",
+    "estimatedGas": "538668",
+    "from": "0xcc76d03ef4c21bf253a561c5e7dd9c1734e6e22a",
+    "gasPrice": "82000000000",
+    "protocolFee": "0",
+    "minimumProtocolFee": "0",
+    "buyTokenAddress": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+    "sellTokenAddress": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+    "buyAmount": "455368",
+    "sellAmount": "1000000000000000000",
+    "sources": [
+        { "name": "SushiSwap", "proportion": "0" },
+        { "name": "QuickSwap", "proportion": "0" },
+        { "name": "ComethSwap", "proportion": "0" },
+        { "name": "Dfyn", "proportion": "0" },
+        { "name": "mStable", "proportion": "0" },
+        { "name": "Curve", "proportion": "0" },
+        { "name": "DODO_V2", "proportion": "0" },
+        { "name": "DODO", "proportion": "0" },
+        { "name": "Curve_V2", "proportion": "0" },
+        { "name": "WaultSwap", "proportion": "0" },
+        { "name": "ApeSwap", "proportion": "0" },
+        { "name": "FirebirdOneSwap", "proportion": "0" },
+        { "name": "Balancer_V2", "proportion": "0" },
+        { "name": "KyberDMM", "proportion": "0" },
+        { "name": "LiquidityProvider", "proportion": "0" },
+        { "name": "MultiHop", "proportion": "0" },
+        { "name": "IronSwap", "proportion": "0" },
+        { "name": "Aave_V2", "proportion": "0" },
+        { "name": "Uniswap_V3", "proportion": "0" },
+        { "name": "Synapse", "proportion": "0" },
+        { "name": "MeshSwap", "proportion": "1" }
+    ],
+    "orders": [
+        {
+            "makerToken": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+            "takerToken": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+            "makerAmount": "455368",
+            "takerAmount": "1000000000000000000",
+            "fillData": {
+                "tokenAddressPath": [
+                    "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+                    "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"
+                ],
+                "router": "0x10f4a785f458bc144e3706575924889954946639"
+            },
+            "source": "MeshSwap",
+            "sourcePathId": "0xd421906442882c7ae8e624f86a707e2c723a828c6696f6f93943a88e9909a550",
+            "type": 0
+        }
+    ],
+    "allowanceTarget": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+    "decodedUniqueId": "1b368ad125-1656630796",
+    "sellTokenToEthRate": "1",
+    "buyTokenToEthRate": "0.454261",
+    "expectedSlippage": null,
+    "priceComparisons": [
+        {
+            "name": "MeshSwap",
+            "price": "0.455368",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "455368",
+            "gas": "111000",
+            "savingsInEth": "-0.031053250909090909"
+        },
+        {
+            "name": "Uniswap_V3",
+            "price": "0.455215",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "455215",
+            "gas": "121338",
+            "savingsInEth": "-0.029868724132907173"
+        },
+        {
+            "name": "WaultSwap",
+            "price": "0.454573",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "454573",
+            "gas": "111000",
+            "savingsInEth": "-0.029303155699508753"
+        },
+        {
+            "name": "QuickSwap",
+            "price": "0.4541",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "454100",
+            "gas": "111000",
+            "savingsInEth": "-0.028261904084247922"
+        },
+        {
+            "name": "DODO_V2",
+            "price": "0.45411",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "454110",
+            "gas": "121000",
+            "savingsInEth": "-0.027463917860469082"
+        },
+        {
+            "name": "Balancer_V2",
+            "price": "0.453964",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "453964",
+            "gas": "121000",
+            "savingsInEth": "-0.027142516727640157"
+        },
+        {
+            "name": "ApeSwap",
+            "price": "0.453481",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "453481",
+            "gas": "111000",
+            "savingsInEth": "-0.026899251336158168"
+        },
+        {
+            "name": "SushiSwap",
+            "price": "0.454261",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "454261",
+            "gas": "171000",
+            "savingsInEth": "-0.023696325881408585"
+        },
+        {
+            "name": "ComethSwap",
+            "price": "0.452038",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "452038",
+            "gas": "171000",
+            "savingsInEth": "-0.018802663427444895"
+        },
+        {
+            "name": "MultiHop",
+            "price": "0.45689",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "456890",
+            "gas": "318198",
+            "savingsInEth": "-0.01741351164995134"
+        },
+        {
+            "name": "Dfyn",
+            "price": "0.448592",
+            "sellAmount": "1000000000000000000",
+            "buyAmount": "448592",
+            "gas": "171000",
+            "savingsInEth": "-0.011216716141633434"
+        },
+        { "name": "mStable", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        { "name": "Curve", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        { "name": "DODO", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        { "name": "Curve_V2", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        {
+            "name": "FirebirdOneSwap",
+            "price": null,
+            "gas": null,
+            "savingsInEth": null,
+            "buyAmount": null,
+            "sellAmount": null
+        },
+        { "name": "KyberDMM", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        {
+            "name": "LiquidityProvider",
+            "price": null,
+            "gas": null,
+            "savingsInEth": null,
+            "buyAmount": null,
+            "sellAmount": null
+        },
+        { "name": "IronSwap", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        { "name": "Aave_V2", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null },
+        { "name": "Synapse", "price": null, "gas": null, "savingsInEth": null, "buyAmount": null, "sellAmount": null }
+    ]
+}

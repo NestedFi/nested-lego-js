@@ -60,4 +60,10 @@ describe('Anonymous user', () => {
         await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
         assert.isString(seller.buildCallData()?.data);
     });
+
+    it('excludes 0x from quote retrieval', async () => {
+        const ptf = instance.createPortfolio(poly_usdc.contract);
+        await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
+        assert.isString(ptf.buildCallData()?.data);
+    });
 });

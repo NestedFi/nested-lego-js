@@ -2,6 +2,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees, ZERO_ADDRESS } from './public-types';
 import { ActionType, _HasOrder, _TokenOrder, _TokenOrderData } from './internal-types';
 import { addFees, buildOrderStruct, ERROR_NO_SIGNER, normalize, removeFees, safeMult, wrap } from './utils';
+import { DexAggregator } from './dex-aggregator-types';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
 
@@ -17,6 +18,7 @@ export class TokenOrderImpl implements _TokenOrder {
     guaranteedPrice!: number;
     fees!: TokenOrderFees;
     estimatedPriceImpact: number = 0;
+    operator: DexAggregator | null = null;
     private feesRate!: number;
 
     constructor(
@@ -308,6 +310,7 @@ export class TokenOrderImpl implements _TokenOrder {
                             ),
                         };
                         this.estimatedPriceImpact = parseFloat(aggregatorQuote.estimatedPriceImpact);
+                        this.operator = aggregatorQuote.aggregator;
                         resolve(true);
                     } catch (e) {
                         reject(e);
@@ -316,5 +319,9 @@ export class TokenOrderImpl implements _TokenOrder {
             };
         }));
         return op;
+    }
+
+    public getOrderOperator(): string | undefined {
+        return this._contractOrder?.order.operator;
     }
 }
