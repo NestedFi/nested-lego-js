@@ -40,8 +40,8 @@ describe('Create', () => {
 
         // swap USDC for SUSHI
         const ptf = instance.createPortfolio(poly_usdc.contract, {
-            name: 'Test Portfolio',
-            tags: ['test'],
+            name: 'SUSHI ptf',
+            tags: ['sushi'],
         });
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(poly_sushi.smallAmount);
         await approve(ptf);

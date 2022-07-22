@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers';
 import { Chain, HexString } from './public-types';
 
-export type DexAggregator = 'ZeroEx' | 'ParaSwap';
+export type DexAggregator = 'ZeroEx' | 'Paraswap';
 
 export type AggregatorRequest = {
     readonly userAddress?: HexString;
