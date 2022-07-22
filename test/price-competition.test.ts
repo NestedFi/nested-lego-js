@@ -28,7 +28,7 @@ describe('Price competition', () => {
     });
 
     it('Excludes ParaSwap from quoting', () => {
-        return addTokenExcludingDexAggregator('ParaSwap');
+        return addTokenExcludingDexAggregator('Paraswap');
     });
 
     it('should pick ParaSwap as cheapest', async () => {
@@ -39,7 +39,7 @@ describe('Price competition', () => {
         });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
-        assert.equal(ptf.orders[0].operator, 'ParaSwap');
+        assert.equal(ptf.orders[0].operator, 'Paraswap');
     });
 
     it('should pick 0x as cheapest', async () => {

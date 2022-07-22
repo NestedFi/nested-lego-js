@@ -47,6 +47,7 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
         const total = this.totalBudget;
         const idOrNull = this.metadata?.originalPortfolioId;
         const originalId = idOrNull ? inferNftId(idOrNull, this.parent.chain) : 0;
+
         return {
             to: this.parent.tools.factoryContract.address as HexString,
             data: this.parent.tools.factoryInterface.encodeFunctionData('create', [
@@ -63,7 +64,7 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
             ]) as HexString,
             // compute how much native token we need as input:
             value: this.spentToken === NATIVE_TOKEN ? total : BigNumber.from(0),
-        };
+        } as any;
     }
 
     async attachMetadataToTransaction(

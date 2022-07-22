@@ -167,7 +167,7 @@ export class TokenOrderImpl implements _TokenOrder {
             this._prepareFlat();
             return true;
         } else {
-            // else, use 0x to perform a swap
+            // else, use dex aggregator to perform a swap
             return await this._prepareAggregatorSwap();
         }
     }
@@ -299,6 +299,7 @@ export class TokenOrderImpl implements _TokenOrder {
                                 ],
                             ),
                         };
+                        console.log(this._contractOrder);
                         this.estimatedPriceImpact = parseFloat(aggregatorQuote.estimatedPriceImpact);
                         this.operator = aggregatorQuote.aggregator;
                         resolve(true);

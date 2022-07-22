@@ -210,8 +210,8 @@ export class ChainTools implements NestedTools {
                 fetch: this.fetch0xSwap.bind(this),
                 convertToQuoteResp: zeroExRespToQuoteResp,
             },
-            ParaSwap: {
-                name: 'ParaSwap' as DexAggregator,
+            Paraswap: {
+                name: 'Paraswap' as DexAggregator,
                 fetch: this.fetchParaSwap.bind(this),
                 convertToQuoteResp: paraSwapRespToQuoteResp,
             },

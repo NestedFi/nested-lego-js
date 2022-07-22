@@ -35,7 +35,7 @@ describe('Paraswap SDK', () => {
         const instance = await connect({ chain: Chain.poly, excludeDexAggregators: ['ZeroEx'] });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(poly_sushi.makeAmount(42));
-        console.log(ptf.orders);
+        expect(ptf.orders.length).to.be.greaterThan(0);
     });
 
     it('Can create a simple portfolio with input budget', async () => {

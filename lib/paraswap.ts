@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { parseUnits } from 'ethers/lib/utils';
+import { formatEther, formatUnits, parseUnits } from 'ethers/lib/utils';
 import { ParaSwap, APIError, SwapSide } from 'paraswap';
 import { OptimalRate } from 'paraswap-core';
 import { defaultContracts } from './default-contracts';
@@ -33,16 +33,20 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         throw new Error(`Failed to fetch ParaSwap quote: ${priceRoute.message} (${priceRoute.status})`);
     }
 
-    const minAmount = safeMult(
-        BigNumber.from(swapSide === SwapSide.SELL ? priceRoute.destAmount : priceRoute.srcAmount),
-        1 - config.slippage,
-    );
+    const srcAmount =
+        swapSide === SwapSide.BUY
+            ? safeMult(BigNumber.from(priceRoute.srcAmount), 1 + config.slippage)
+            : priceRoute.srcAmount;
+    const destAmount =
+        swapSide === SwapSide.SELL
+            ? safeMult(BigNumber.from(priceRoute.destAmount), 1 - config.slippage)
+            : priceRoute.destAmount;
 
     const transaction = await paraSwap.buildTx(
         config.spendToken,
         config.buyToken,
-        priceRoute.srcAmount,
-        priceRoute.destAmount,
+        srcAmount.toString(),
+        destAmount.toString(),
         priceRoute,
         config.userAddress ?? ZERO_ADDRESS,
         undefined,
@@ -69,10 +73,11 @@ export function paraSwapRespToQuoteResp(answer: ParaSwapAnswer): AggregatorQuote
     const price = BigNumber.from(answer.priceRoute.destAmount)
         .mul(BigNumber.from(10).pow(answer.priceRoute.srcDecimals))
         .div(BigNumber.from(answer.priceRoute.srcAmount));
+
     return {
-        aggregator: 'ParaSwap',
+        aggregator: 'Paraswap',
         chainId: answer.priceRoute.network,
-        price: price.toString(),
+        price: formatUnits(price, answer.priceRoute.destDecimals),
         to: answer.transaction.to as HexString,
         data: answer.transaction.data as HexString,
         value: answer.transaction.value,
