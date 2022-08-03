@@ -12,7 +12,7 @@ import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
 
 export enum Chain {
     eth = 'eth',
-    bsc = 'bsc',
+    bnb = 'bnb',
     avax = 'avax',
     poly = 'poly',
     opti = 'opti',
