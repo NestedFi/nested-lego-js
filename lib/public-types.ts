@@ -46,6 +46,8 @@ export interface CallData {
     value?: BigNumber;
     /** Gas limit to use */
     gasLimit?: BigNumber;
+    /** Gas limit to use */
+    gasPrice?: BigNumber;
 }
 
 export interface TokenOrderFees {
@@ -182,7 +184,11 @@ export interface PortfolioCreator extends CanAddTokensOperation {
     attachMetadataToTransaction(transactionHash: HexString, from: HexString, nonce: number): PromiseLike<void>;
 
     /** Perform the operation */
-    execute(): PromiseLike<CreatePortfolioResult>;
+    execute(options?: ExecOptions): PromiseLike<CreatePortfolioResult>;
+}
+
+export interface ExecOptions {
+    gasPrice?: BigNumber;
 }
 
 export interface CreatePortfolioResult {
@@ -206,7 +212,7 @@ export interface PortfolioTokenAdder extends CanAddTokensOperation {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export type TokenLiquidator = Omit<TokenOrder, 'changeBudgetAmount' | 'remove'>;
@@ -225,7 +231,7 @@ export interface PortfolioLiquidator {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface PortfolioSeller extends HasOrders {
@@ -245,7 +251,7 @@ export interface PortfolioSeller extends HasOrders {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface PorfolioSender {
@@ -253,7 +259,7 @@ export interface PorfolioSender {
     buildCallData(): Promise<CallData>;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface FeesClaimer {
@@ -264,7 +270,7 @@ export interface FeesClaimer {
     buildCallData(): Promise<CallData>;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface SingleToMultiSwapper extends HasOrders {
@@ -284,7 +290,7 @@ export interface SingleToMultiSwapper extends HasOrders {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface MultiToSingleSwapper extends HasOrders {
@@ -301,7 +307,7 @@ export interface MultiToSingleSwapper extends HasOrders {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface PortfolioComplexOperation {
@@ -343,7 +349,7 @@ export interface PortfolioComplexOperation {
     buildCallData(): CallData;
 
     /** Perform the operation */
-    execute(): PromiseLike<ContractReceipt>;
+    execute(options?: ExecOptions): PromiseLike<ContractReceipt>;
 }
 
 export interface Holding {
@@ -388,6 +394,8 @@ export interface NestedTools {
     factoryAllowance(ofUser: HexString, forToken: HexString): Promise<BigNumber>;
     /** Approve factory spending for an ERC20 token */
     approve(token: HexString, amount?: BigNumberish): Promise<ContractTransaction>;
+    /** Prepare calldata to be executed (computes gas limit, ...)  */
+    prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void>;
 }
 
 export interface INestedContracts {

@@ -50,8 +50,18 @@ export class TokenOrderImpl implements _TokenOrder {
         this.setFees(BigNumber.from(0));
     }
 
+    private isZero(budget: BigNumberish) {
+        if (!budget || typeof budget === 'number') {
+            return !budget;
+        }
+        if (typeof budget === 'string' && budget.includes('.')) {
+            return !parseFloat(budget);
+        }
+        return BigNumber.from(budget).isZero();
+    }
+
     async setInputAmount(forBudgetAmount: BigNumberish): Promise<boolean> {
-        if (BigNumber.from(forBudgetAmount).isZero()) {
+        if (this.isZero(forBudgetAmount)) {
             this.reset();
             return true;
         }
@@ -67,7 +77,7 @@ export class TokenOrderImpl implements _TokenOrder {
     }
 
     async setOutputAmount(boughtAmount: BigNumberish): Promise<boolean> {
-        if (BigNumber.from(boughtAmount).isZero()) {
+        if (this.isZero(boughtAmount)) {
             this.reset();
             return true;
         }

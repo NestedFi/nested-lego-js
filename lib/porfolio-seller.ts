@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
-import { CallData, HexString, INestedContracts, PortfolioSeller, TokenOrder } from './public-types';
+import { CallData, ExecOptions, HexString, INestedContracts, PortfolioSeller, TokenOrder } from './public-types';
 import { TokenOrderImpl } from './token-order';
 import { as, BatchedOutputOrders, normalize, safeMult, wrap } from './utils';
 
@@ -42,10 +42,10 @@ export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSelle
         };
     }
 
-    async execute(): Promise<ContractReceipt> {
+    async execute(options?: ExecOptions): Promise<ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
-        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

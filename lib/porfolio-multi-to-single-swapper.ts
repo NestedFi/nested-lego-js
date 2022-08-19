@@ -1,7 +1,7 @@
 import { BigNumberish } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
 import { HasOrdersImpl } from './has-horders';
-import { CallData, HexString, TokenOrder, INestedContracts, MultiToSingleSwapper } from './public-types';
+import { CallData, HexString, TokenOrder, INestedContracts, MultiToSingleSwapper, ExecOptions } from './public-types';
 import { TokenOrderImpl } from './token-order';
 import { as, BatchedOutputOrders, safeMult, wrap } from './utils';
 
@@ -42,10 +42,10 @@ export class MultiToSingleSwapperImpl extends HasOrdersImpl implements MultiToSi
         };
     }
 
-    async execute(): Promise<ContractReceipt> {
+    async execute(options?: ExecOptions): Promise<ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
-        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

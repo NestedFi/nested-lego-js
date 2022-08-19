@@ -1,7 +1,16 @@
 import { BigNumber, BigNumberish, constants, Contract, ContractTransaction, providers, Signer, utils } from 'ethers';
-import { Chain, CreatePortfolioResult, HexString, NATIVE_TOKEN, NestedTools, NftEventType } from './public-types';
+import {
+    CallData,
+    Chain,
+    CreatePortfolioResult,
+    ExecOptions,
+    HexString,
+    NATIVE_TOKEN,
+    NestedTools,
+    NftEventType,
+} from './public-types';
 import { ERC20_ABI } from './default-contracts';
-import { checkHasSigner, lazy, normalize, wrap } from './utils';
+import { checkHasSigner, lazy, normalize, safeMult, wrap } from './utils';
 import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import feeSplitterAbi from './nested-fee-splitter.json';
@@ -127,6 +136,11 @@ export class ChainTools implements NestedTools {
         const toApprove = amount ? await this.toTokenAmount(token, amount) : constants.MaxUint256;
         const contract = this.tokenContract(token, true);
         return await contract.approve(this.factoryContract.address, toApprove);
+    }
+
+    async prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void> {
+        callData.gasLimit = safeMult(await checkHasSigner(this.signer).estimateGas(callData), 1.1);
+        callData.gasPrice = options?.gasPrice;
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */

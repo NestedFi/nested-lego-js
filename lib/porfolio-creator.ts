@@ -5,6 +5,7 @@ import {
     CallData,
     CreatePortfolioMetadata,
     CreatePortfolioResult,
+    ExecOptions,
     HexString,
     NATIVE_TOKEN,
     PorfolioMetadata,
@@ -104,10 +105,10 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
         }
     }
 
-    async execute(): Promise<CreatePortfolioResult> {
+    async execute(options?: ExecOptions): Promise<CreatePortfolioResult> {
         // perform the actual transaction
         const callData = this.buildCallData();
-        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         await this.attachMetadataToTransaction(tx.hash as HexString, tx.from as HexString, tx.nonce as number);
         const receipt = await tx.wait();

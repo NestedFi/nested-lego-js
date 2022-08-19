@@ -1,6 +1,6 @@
 import { ContractReceipt } from '@ethersproject/contracts';
 import { HexString } from '.';
-import { CallData, FeesClaimer, INestedContracts } from './public-types';
+import { CallData, ExecOptions, FeesClaimer, INestedContracts } from './public-types';
 import { wrap } from './utils';
 
 export class FeesClaimerImpl implements FeesClaimer {
@@ -19,9 +19,10 @@ export class FeesClaimerImpl implements FeesClaimer {
         };
     }
 
-    async execute(): Promise<ContractReceipt> {
+    async execute(options?: ExecOptions): Promise<ContractReceipt> {
         // actual transaction
         const callData = await this.buildCallData();
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

@@ -1,7 +1,7 @@
 import { ContractReceipt } from '@ethersproject/contracts';
 import { BigNumber } from 'ethers';
 import { HexString, PorfolioSender } from '.';
-import { CallData, INestedContracts } from './public-types';
+import { CallData, ExecOptions, INestedContracts } from './public-types';
 
 export class PorfolioSenderImpl implements PorfolioSender {
     constructor(
@@ -24,9 +24,10 @@ export class PorfolioSenderImpl implements PorfolioSender {
         };
     }
 
-    async execute(): Promise<ContractReceipt> {
+    async execute(options?: ExecOptions): Promise<ContractReceipt> {
         // actual transaction
         const callData = await this.buildCallData();
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

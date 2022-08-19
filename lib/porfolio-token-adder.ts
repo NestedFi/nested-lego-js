@@ -4,6 +4,7 @@ import { _HasOrder, _TokenOrder } from './internal-types';
 import {
     CallData,
     CanAddTokensOperation,
+    ExecOptions,
     HexString,
     INestedContracts,
     NATIVE_TOKEN,
@@ -72,10 +73,10 @@ export class PortfolioTokenAdderImpl extends PortfolioTokenAdderBase implements 
         };
     }
 
-    async execute(): Promise<ethers.ContractReceipt> {
+    async execute(options?: ExecOptions): Promise<ethers.ContractReceipt> {
         // actual transaction
         const callData = this.buildCallData();
-        callData.gasLimit = safeMult(await this.parent.signer.estimateGas(callData), 1.1);
+        await this.parent.tools.prepareCalldata(callData, options);
         const tx = await this.parent.signer.sendTransaction(callData);
         const receipt = await tx.wait();
         return receipt;

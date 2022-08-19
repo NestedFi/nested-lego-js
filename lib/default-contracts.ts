@@ -1,5 +1,5 @@
-import { Networkish } from '@ethersproject/networks';
-import { Chain, HexString } from './public-types';
+import type { Networkish } from '@ethersproject/networks';
+import type { Chain, HexString } from './public-types';
 
 export interface ConnectionConfig {
     providerConfig: Networkish;

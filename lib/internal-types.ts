@@ -1,6 +1,6 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { HasOrders, NestedTools, TokenOrder } from './public-types';
-import { NestedOrder } from './utils';
+import type { BigNumber } from '@ethersproject/bignumber';
+import type { HasOrders, NestedTools, TokenOrder } from './public-types';
+import type { NestedOrder } from './utils';
 
 export interface _HasOrder extends HasOrders {
     readonly tools: NestedTools;
