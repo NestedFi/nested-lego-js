@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { HexString, TokenOrderFees, ZERO_ADDRESS } from './public-types';
 import { ActionType, _HasOrder, _TokenOrder, _TokenOrderData } from './internal-types';
-import { addFees, buildOrderStruct, ERROR_NO_SIGNER, normalize, removeFees, safeMult, wrap } from './utils';
+import { addFees, buildOrderStruct, normalize, removeFees, safeMult, wrap } from './utils';
 import { DexAggregator } from './dex-aggregator-types';
 
 type QChangeResult = 'changed' | 'unchanged' | 'race';
@@ -233,6 +233,8 @@ export class TokenOrderImpl implements _TokenOrder {
                 timeout: setTimeout(async () => {
                     try {
                         // build the swap order
+                        const userAddress =
+                            ((await this.parent.parent.maybeSigner?.getAddress()) as HexString) ?? ZERO_ADDRESS;
                         const aggregatorQuote = await this.parent.tools.fetchLowestQuote({
                             userAddress,
                             chain: this.chain,
@@ -299,7 +301,6 @@ export class TokenOrderImpl implements _TokenOrder {
                                 ],
                             ),
                         };
-                        console.log(this._contractOrder);
                         this.estimatedPriceImpact = parseFloat(aggregatorQuote.estimatedPriceImpact);
                         this.operator = aggregatorQuote.aggregator;
                         resolve(true);

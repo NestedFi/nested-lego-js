@@ -5,7 +5,7 @@ import { ConnectionConfig, defaultContracts } from './default-contracts';
 import { NestedContractsInstance } from './contracts-instance';
 import factoryAbi from './nested-factory.json';
 import { ChainTools } from './chain-tools';
-import { unreachable } from './utils';
+import { nullish, unreachable } from './utils';
 import { ZeroExFetcher } from './0x-types';
 import { inferChainFromId } from './public-utils';
 import { ParaSwapFetcher } from './paraswap-types';
@@ -29,6 +29,8 @@ export type NestedConnection = {
     paraSwapFetcher?: ParaSwapFetcher;
     /** Exclude dex aggregator */
     excludeDexAggregators?: DexAggregator[];
+    /** Gas price */
+    defaultGasPrice?: ethers.BigNumberish;
 } & (
     | {
           /**
@@ -75,9 +77,8 @@ export type NestedConnection = {
     );
 
 export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<INestedContracts> {
-    let { chain, factoryAddress, provider, signer, zeroExFetcher, zeroExUrl, paraSwapFetcher } = await readConfig(
-        _opts,
-    );
+    let { chain, factoryAddress, provider, signer, zeroExFetcher, zeroExUrl, paraSwapFetcher, defaultGasPrice } =
+        await readConfig(_opts);
 
     // build contracts
     let nestedFactory = new ethers.Contract(factoryAddress, factoryAbi, provider);
@@ -100,6 +101,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
         _opts.nestedFinanceApi ?? 'https://api.nested.finance',
         _opts.nestedFinanceUi ?? 'https://app.nested.fi',
         _opts.excludeDexAggregators ?? [],
+        defaultGasPrice,
     );
     return new NestedContractsInstance(chain, tools, signer);
 }
@@ -112,6 +114,7 @@ async function readConfig(_opts: NestedConnection): Promise<{
     paraSwapFetcher?: ParaSwapFetcher;
     signer?: ethers.Signer;
     provider: ethers.providers.Provider;
+    defaultGasPrice?: ethers.BigNumber;
 }> {
     let chain: Chain;
     let cfg: ConnectionConfig;
@@ -163,6 +166,7 @@ async function readConfig(_opts: NestedConnection): Promise<{
         signer,
         factoryAddress,
         provider,
+        defaultGasPrice: nullish(_opts?.defaultGasPrice) ? undefined : ethers.BigNumber.from(_opts.defaultGasPrice),
         zeroExFetcher: 'zeroExFetcher' in _opts ? _opts.zeroExFetcher : undefined,
         zeroExUrl: 'zeroExApi' in _opts ? _opts.zeroExApi : undefined,
         paraSwapFetcher: _opts.paraSwapFetcher,

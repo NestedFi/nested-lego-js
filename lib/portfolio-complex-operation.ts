@@ -178,7 +178,6 @@ export class PortfolioComplexOperationImpl implements PortfolioComplexOperation 
                 value,
             };
         }
-        console.log('value', value.toString());
 
         // there are both inputs & withdrawals
         return {
