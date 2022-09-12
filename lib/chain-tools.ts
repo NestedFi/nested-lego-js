@@ -18,7 +18,7 @@ import assetAbi from './nested-asset.json';
 import { defaultZeroExFetcher, zeroExRespToQuoteResp } from './0x';
 import { defaultParaSwapFetcher, paraSwapRespToQuoteResp } from './paraswap';
 import { ParaSwapAnswer, ParaSwapFetcher } from './paraswap-types';
-import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
+import { AggregatorQuoteResponse, AggregatorRequest, DexAggregator } from './dex-aggregator-types';
 
 const decimals = new Map<string, Promise<number>>();
 
@@ -64,6 +64,7 @@ export class ChainTools implements NestedTools {
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
         readonly excludeDexAggregators: DexAggregator[] = [],
+        private defaultGasPrice: BigNumber | undefined,
     ) {
         this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
         this.assetInterface = new utils.Interface(assetAbi);
@@ -145,7 +146,7 @@ export class ChainTools implements NestedTools {
 
     async prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void> {
         callData.gasLimit = safeMult(await checkHasSigner(this.signer).estimateGas(callData), 1.1);
-        callData.gasPrice = options?.gasPrice;
+        callData.gasPrice = options?.gasPrice ?? this.defaultGasPrice;
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */

@@ -38,6 +38,10 @@ export class NestedContractsInstance implements INestedContracts {
         return checkHasSigner(this._signer);
     }
 
+    get maybeSigner() {
+        return this._signer ?? null;
+    }
+
     createPortfolio(budgetToken: HexString, metadata?: CreatePortfolioMetadata): PortfolioCreator {
         const ret = new PortfolioCreatorImpl(this, normalize(budgetToken));
         if (metadata) {

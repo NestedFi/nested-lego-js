@@ -1,9 +1,9 @@
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { BigNumber } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
-import { HasOrdersImpl } from './has-horders';
+import { HasOrdersImpl } from './has-orders';
 import { CallData, ExecOptions, HexString, INestedContracts, PortfolioSeller, TokenOrder } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { as, BatchedOutputOrders, normalize, safeMult, wrap } from './utils';
+import { as, BatchedOutputOrders, wrap } from './utils';
 
 export class PortfolioSellerImpl extends HasOrdersImpl implements PortfolioSeller {
     constructor(parent: INestedContracts, private nftId: BigNumber, readonly receivedToken: HexString) {

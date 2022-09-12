@@ -417,6 +417,7 @@ export interface INestedContracts {
 
     /** Transaction signer (will throw an exception if you did not provide a signer when calling connect()) */
     readonly signer: Signer;
+    readonly maybeSigner: Signer | null;
 
     /**
      * Creates a portfolio.

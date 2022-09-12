@@ -1,6 +1,6 @@
 import { BigNumberish } from '@ethersproject/bignumber';
 import { ContractReceipt } from '@ethersproject/contracts';
-import { HasOrdersImpl } from './has-horders';
+import { HasOrdersImpl } from './has-orders';
 import { CallData, HexString, SingleToMultiSwapper, TokenOrder, INestedContracts, ExecOptions } from './public-types';
 import { TokenOrderImpl } from './token-order';
 import { as, BatchedInputOrders, safeMult, wrap } from './utils';

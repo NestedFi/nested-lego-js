@@ -10,6 +10,7 @@ export async function testConfig(): Promise<NestedConnection> {
         chain: process.env.CHAIN as Chain,
         signer: Wallet.fromMnemonic(process.env.MNEMONIC),
         contract: '0x53b89BAb5a8D589E5c3bE4642A7128C3F27da790',
+        defaultGasPrice: process.env.GAS_PRICE,
         // excludeDexAggregators: ['ZeroEx'],
     };
 }
