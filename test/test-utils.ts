@@ -1,17 +1,31 @@
 import 'mocha';
-import { utils, Wallet } from 'ethers';
-import { Chain, HexNumber, HexString, NATIVE_TOKEN, NestedConnection } from '../lib';
+import { BigNumber, utils, Wallet } from 'ethers';
+import { HexNumber, HexString, NATIVE_TOKEN, NestedConnection } from '../lib';
+import { TestProvider } from './test-provider';
 
 export async function testConfig(): Promise<NestedConnection> {
-    if (!process.env.MNEMONIC || !process.env.CHAIN) {
+    if (!process.env.MNEMONIC) {
         throw new Error('Please set MNEMONIC environment variable');
     }
+    const addr = '0x8B09AB0612d4E1D44Cf0C1641b5d0be43a3aec9F';
+    const provider = new TestProvider(addr);
     return {
-        chain: process.env.CHAIN as Chain,
-        signer: Wallet.fromMnemonic(process.env.MNEMONIC),
         contract: '0x53b89BAb5a8D589E5c3bE4642A7128C3F27da790',
-        defaultGasPrice: process.env.GAS_PRICE,
-        // excludeDexAggregators: ['ZeroEx'],
+        signer: {
+            provider,
+            async getAddress() {
+                return addr;
+            },
+            sendTransaction(data: any) {
+                return provider.sendTransaction(data);
+            },
+            call(a: any, b: any) {
+                return provider.call(a, b);
+            },
+            estimateGas: () => Promise.resolve(BigNumber.from(0x123)),
+            _isSigner: true,
+            // Wallet.fromMnemonic(process.env.MNEMONIC)
+        } as any,
     };
 }
 

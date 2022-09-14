@@ -2,6 +2,7 @@ import 'mocha';
 import { expect, assert } from 'chai';
 import { CanAddTokensOperation, connect, INestedContracts } from '../lib';
 import { native_token, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
+import { logExec } from './test-provider';
 
 describe('Create', () => {
     let instance: INestedContracts;
@@ -20,12 +21,10 @@ describe('Create', () => {
         const beforeSpent = await instance.tools.balanceOf(poly_usdc.contract);
 
         // swap USDC for SUSHI
-        const ptf = instance.createPortfolio(poly_usdc.contract, {
-            name: 'Test Portfolio',
-            tags: ['test'],
-        });
+        const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         await approve(ptf);
+        logExec();
         const { idInChain, id } = await ptf.execute();
         assert.isString(id);
         assert.isString(idInChain);
