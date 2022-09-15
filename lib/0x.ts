@@ -30,6 +30,8 @@ function zxEndpoint(chain: Chain) {
             return 'https://polygon.api.0x.org/';
         case Chain.opti:
             return 'https://optimism.api.0x.org/';
+        case Chain.arbi:
+            return 'https://arbitrum.api.0x.org/';
         case Chain.ftm:
             return 'https://fantom.api.0x.org/';
         case Chain.celo:

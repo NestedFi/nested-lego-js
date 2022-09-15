@@ -16,6 +16,7 @@ export enum Chain {
     avax = 'avax',
     poly = 'poly',
     opti = 'opti',
+    arbi = 'arbi',
     ftm = 'ftm',
     celo = 'celo',
 }
