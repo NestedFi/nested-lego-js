@@ -42,7 +42,7 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
     },
     arbi: {
         providerConfig: 'https://arb1.arbitrum.io/rpc',
-        factoryAddress: null, // TODO ARBI SUPPORT
+        factoryAddress: '0xD9C7cd07f3435dF70B3204e1612Aebb1C374D1DE',
         wrappedToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
         chainId: 42161,
     },
