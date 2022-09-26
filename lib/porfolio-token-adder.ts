@@ -25,7 +25,8 @@ export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements C
         }
         const user = (await this.parent.signer.getAddress()) as HexString;
         const allowance = await this.tools.factoryAllowance(user, this.spentToken);
-        return allowance.gte(BigNumber.from(this.totalBudget));
+        const budget = await this.waitTotalBudget();
+        return allowance.gte(BigNumber.from(budget));
     }
 
     async approve(amount?: BigNumberish): Promise<void> {

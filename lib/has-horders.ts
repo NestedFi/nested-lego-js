@@ -10,6 +10,20 @@ export function ensureSettledOrders(orders: readonly _TokenOrder[]) {
     }
     return notNil(ret);
 }
+export async function waitOrders(orders: readonly _TokenOrder[]) {
+    let i = 0;
+    while (true) {
+        if (++i > 5) {
+            throw new Error('Your order seems to change too fast, cannot compute its budget.');
+        }
+        const promises = notNil(orders.map(x => x._pendingQuotation));
+        if (!promises.length) {
+            break;
+        }
+        await Promise.allSettled(promises);
+    }
+    return ensureSettledOrders(orders);
+}
 
 export class HasOrdersImpl implements _HasOrder {
     _contractOrder!: NestedOrder;
@@ -24,6 +38,11 @@ export class HasOrdersImpl implements _HasOrder {
 
     get totalBudget(): BigNumber {
         return sumBn(ensureSettledOrders(this._orders).map(b => b.inputQty));
+    }
+
+    async waitTotalBudget(): Promise<BigNumber> {
+        const orders = await waitOrders(this._orders);
+        return sumBn(orders.map(b => b.inputQty));
     }
 
     _removeOrder(order: _TokenOrder) {

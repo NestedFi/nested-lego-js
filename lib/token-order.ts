@@ -7,7 +7,7 @@ type QChangeResult = 'changed' | 'unchanged' | 'race';
 
 export class TokenOrderImpl implements _TokenOrder {
     private qtySetter: PromiseLike<QChangeResult> | null = null;
-    private pendingQuotation: PromiseLike<boolean> | null = null;
+    _pendingQuotation: PromiseLike<boolean> | null = null;
     private debouncer?: { timeout: any; resolver: (value: boolean) => void };
     fixedAmount: 'output' | 'input' = 'input';
     inputQty: BigNumber = BigNumber.from(0);
@@ -46,7 +46,7 @@ export class TokenOrderImpl implements _TokenOrder {
         this.price = 0;
         this.guaranteedPrice = 0;
         this._contractOrder = null!;
-        this.pendingQuotation = null;
+        this._pendingQuotation = null;
         this.setFees(BigNumber.from(0));
     }
 
@@ -196,7 +196,7 @@ export class TokenOrderImpl implements _TokenOrder {
             this.inputQty = this.outputQty;
         }
         this.setFees(this.inputQty.sub(removeFees(this.inputQty, this.feesRate)));
-        this.pendingQuotation = null;
+        this._pendingQuotation = null;
         clearTimeout(this.debouncer?.timeout);
         this.debouncer = undefined;
         this._contractOrder = {
@@ -225,7 +225,7 @@ export class TokenOrderImpl implements _TokenOrder {
             this.debouncer.resolver(false);
             this.debouncer = undefined;
         }
-        const op = (this.pendingQuotation = new Promise<boolean>((resolve, reject) => {
+        const op = (this._pendingQuotation = new Promise<boolean>((resolve, reject) => {
             this.debouncer = {
                 resolver: resolve,
                 timeout: setTimeout(async () => {
@@ -250,7 +250,7 @@ export class TokenOrderImpl implements _TokenOrder {
                                   }),
                         });
 
-                        if (op !== this.pendingQuotation) {
+                        if (op !== this._pendingQuotation) {
                             // concurrency issue: a newer quote is being requested
                             return resolve(false);
                         }
@@ -278,7 +278,7 @@ export class TokenOrderImpl implements _TokenOrder {
                             this.setFees(this.outputQty.sub(removeFees(this.outputQty, this.feesRate)));
                         }
 
-                        this.pendingQuotation = null;
+                        this._pendingQuotation = null;
                         this.price = parseFloat(zxQuote.price);
                         this.guaranteedPrice = parseFloat(zxQuote.guaranteedPrice);
                         this._contractOrder = {

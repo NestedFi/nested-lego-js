@@ -9,6 +9,7 @@ export interface _HasOrder extends HasOrders {
 
 export interface _TokenOrder extends TokenOrder {
     readonly _contractOrder: _TokenOrderData | null;
+    readonly _pendingQuotation: PromiseLike<boolean> | null;
 }
 
 export interface _TokenOrderData {
