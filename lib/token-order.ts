@@ -70,7 +70,7 @@ export class TokenOrderImpl implements _TokenOrder {
             case 'race':
                 return Promise.resolve(false);
             case 'unchanged':
-                return Promise.resolve(true);
+                return this._pendingQuotation ?? Promise.resolve(true);
             case 'changed':
                 return await this.refresh();
         }
