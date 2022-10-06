@@ -1,8 +1,8 @@
 import { OptimalRate } from 'paraswap-core';
 import { Transaction } from 'paraswap';
-import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
+import { AggregatorRequest } from './dex-aggregator-types';
 
-export type ParaSwapFetcher = (request: AggregatorRequest) => Promise<ParaSwapAnswer>;
+export type ParaSwapFetcher = (request: AggregatorRequest) => Promise<ParaSwapAnswer | null>;
 
 export interface ParaSwapAnswer {
     priceRoute: OptimalRate;

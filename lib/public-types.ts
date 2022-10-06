@@ -12,7 +12,7 @@ import type { ZeroExRequest, ZeroXAnswer } from './0x-types';
 import type { AggregatorQuoteResponse, AggregatorRequest, DexAggregator } from './dex-aggregator-types';
 import type { ParaSwapAnswer } from './paraswap-types';
 
-export { AggregatorRequest, AggregatorQuoteResponse };
+export type { AggregatorRequest, AggregatorQuoteResponse, DexAggregator };
 
 export enum Chain {
     eth = 'eth',
@@ -379,6 +379,8 @@ export interface NestedTools {
     readonly provider: providers.Provider;
     readonly nestedFinanceApi: string;
     readonly nestedFinanceUi: string;
+    /** Get user address */
+    readonly userAddress: HexString;
 
     /** Gets the number of decimals of a given ERC20 token */
     getErc20Decimals(erc20: HexString): PromiseLike<number>;

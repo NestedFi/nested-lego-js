@@ -1,9 +1,9 @@
 import 'mocha';
 import { assert } from 'chai';
-import { Chain, connect, HexString, ZeroXAnswer } from '../lib';
-import { poly_sushi, poly_usdc, TEST_SLIPPAGE } from './test-utils';
+import { Chain, connect, HexString, NestedConnection, ZeroXAnswer } from '../lib';
+import { poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
 import { AggregatorRequest, DexAggregator } from '../lib/dex-aggregator-types';
-import { ParaSwapAnswer } from '../lib/paraswap-types';
+import { ParaSwapAnswer, ParaSwapFetcher } from '../lib/paraswap-types';
 import paraswapResponse from './fixtures/paraswap-response.json';
 import zeroExResponse from './fixtures/zeroex-response.json';
 import { BigNumber } from 'ethers';
@@ -17,7 +17,10 @@ describe('Price competition', () => {
     */
 
     const addTokenExcludingDexAggregator = async (exclude: DexAggregator) => {
-        const instance = await connect({ chain: Chain.poly, excludeDexAggregators: [exclude] });
+        const instance = await connect({
+            ...testConfig(),
+            excludeDexAggregators: [exclude],
+        });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         assert.isSealed(ptf.buildCallData()?.data);
@@ -33,10 +36,10 @@ describe('Price competition', () => {
 
     it('should pick ParaSwap as cheapest', async () => {
         const instance = await connect({
-            chain: Chain.poly,
+            ...testConfig(),
             paraSwapFetcher: fetchParaSwapMocked,
-            zeroExFetcher: (_: AggregatorRequest) => fetch0xMocked(),
-        });
+            zeroExFetcher: () => fetch0xMocked(),
+        } as NestedConnection);
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         assert.equal(ptf.orders[0].operator, 'Paraswap');
@@ -44,17 +47,17 @@ describe('Price competition', () => {
 
     it('should pick 0x as cheapest', async () => {
         const instance = await connect({
-            chain: Chain.poly,
+            ...testConfig(),
             paraSwapFetcher: fetchParaSwapMocked,
-            zeroExFetcher: (_: AggregatorRequest) => fetch0xMocked(BigNumber.from(700000)),
-        });
+            zeroExFetcher: () => fetch0xMocked(BigNumber.from(700000)),
+        } as NestedConnection);
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         assert.equal(ptf.orders[0].operator, 'ZeroEx');
     });
 });
 
-function fetchParaSwapMocked(request: AggregatorRequest): Promise<ParaSwapAnswer> {
+const fetchParaSwapMocked: ParaSwapFetcher = (request: AggregatorRequest): Promise<ParaSwapAnswer> => {
     return Promise.resolve({
         priceRoute: paraswapResponse.priceRoute as any,
         transaction: {
@@ -65,7 +68,7 @@ function fetchParaSwapMocked(request: AggregatorRequest): Promise<ParaSwapAnswer
             chainId: 0,
         },
     });
-}
+};
 
 function fetch0xMocked(buyAmount?: BigNumber): Promise<ZeroXAnswer> {
     return Promise.resolve({

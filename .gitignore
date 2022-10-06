@@ -5,3 +5,5 @@ dist/
 .env
 **/.DS_Store
 yarn-error.log
+.evm-js-cache
+private

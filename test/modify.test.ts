@@ -1,22 +1,23 @@
 import 'mocha';
 import { expect, assert } from 'chai';
 import { CanAddTokensOperation, Chain, connect, HexNumber, HexString, INestedContracts } from '../lib';
-import { native_token, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
+import { native_token, poly_dai, poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
 import { BigNumber } from '@ethersproject/bignumber';
+import { logExec } from './test-provider';
 
 describe('Modify', () => {
     let instance: INestedContracts;
     let id: HexString;
     let sushiQty: BigNumber;
-    let nativeQty: BigNumber;
+    let daiQty: BigNumber;
     beforeEach(async () => {
-        instance = await connect(await testConfig());
+        instance = await connect(testConfig());
 
         console.log('📐 Creating a portfolio...');
         // Create a portfolio with 2 tokens in it
-        const ptf = instance.createPortfolio(poly_usdc.contract);
-        await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
-        await ptf.addToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
+        const ptf = instance.createPortfolio(native_token.contract);
+        await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        await ptf.addToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
         await approve(ptf);
         const { idInChain } = await ptf.execute();
         assert.isString(idInChain);
@@ -24,7 +25,7 @@ describe('Modify', () => {
         console.log(`👉 Created ptf ${id}...`);
         const assets = await instance.getAssets(id);
         sushiQty = assets.find(x => x.token === poly_sushi.contract)!.amount;
-        nativeQty = assets.find(x => x.token === native_token.contract)!.amount;
+        daiQty = assets.find(x => x.token === poly_dai.contract)!.amount;
         console.log(`👉 Starting test on ptf ${id}...`);
     });
 
@@ -37,25 +38,25 @@ describe('Modify', () => {
     }
 
     it('can add token from wallet', async () => {
-        const ptf = instance.addTokensToPortfolio(id, native_token.contract);
-        await ptf.addToken(poly_usdc.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        const ptf = instance.addTokensToPortfolio(id, poly_dai.contract);
+        await ptf.addToken(poly_usdc.contract, TEST_SLIPPAGE).setInputAmount(poly_dai.smallAmount);
         await approve(ptf);
         await ptf.execute();
     });
 
     it('can swap a single token to multiple tokens (intra-nft)', async () => {
         // spend half of MATIC we have in the ptf to some USDC
-        const ptf = instance.swapSingleToMulti(id, native_token.contract);
+        const ptf = instance.swapSingleToMulti(id, poly_dai.contract);
         await ptf.swapTo(poly_usdc.contract, TEST_SLIPPAGE).setInputAmount(
             // only convert half of the ptf MATIC
-            nativeQty.div(2),
+            daiQty.div(2),
         );
         await ptf.execute();
     });
 
     it('can swap a single token to multiple tokens with output budget (intra-nft)', async () => {
         // spend half of MATIC we have in the ptf to some USDC
-        const ptf = instance.swapSingleToMulti(id, native_token.contract);
+        const ptf = instance.swapSingleToMulti(id, poly_dai.contract);
         await ptf.swapTo(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(
             // very small amount of (wont fail unless sushi becomes HUGE)
             BigNumber.from(poly_sushi.smallAmount).div(1000),
@@ -70,9 +71,9 @@ describe('Modify', () => {
             // only convert half of the ptf SUSHI
             sushiQty.div(2),
         );
-        await ptf.swapFrom(native_token.contract, TEST_SLIPPAGE).setInputAmount(
+        await ptf.swapFrom(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(
             // only convert half of the ptf MATIC
-            nativeQty.div(2),
+            daiQty.div(2),
         );
         await ptf.execute();
     });
@@ -95,9 +96,9 @@ describe('Modify', () => {
             // only convert half of the ptf
             sushiQty.div(2),
         );
-        await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(
+        await seller.sellToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(
             // only convert half of the ptf
-            nativeQty.div(2),
+            daiQty.div(2),
         );
         await seller.execute();
     });
@@ -108,16 +109,16 @@ describe('Modify', () => {
             // only convert half of the ptf
             sushiQty.div(2),
         );
-        await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(
+        await seller.sellToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(
             // only convert half of the ptf
-            nativeQty.div(2),
+            daiQty.div(2),
         );
         await seller.execute();
     });
 
     it('can sell native token to wallet', async () => {
         const seller = instance.sellTokensToWallet(id, native_token.contract);
-        await seller.sellToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(nativeQty.div(2));
+        await seller.sellToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(daiQty.div(2));
         await seller.execute();
     });
 

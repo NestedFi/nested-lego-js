@@ -18,7 +18,9 @@ type _ExclusifyUnion<T, K extends PropertyKey> = T extends unknown
     : never;
 type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;
 
-export type NestedConnection = {
+export type NestedConnection = BaseConfig & ZeroExApiConfig & SigningConfig;
+
+type BaseConfig = {
     /** Specific a version of Nested factory contract */
     contract?: HexString;
     /** @deprecated Customize Nested Finance endpoint (for testing purposes only) */
@@ -31,7 +33,41 @@ export type NestedConnection = {
     excludeDexAggregators?: DexAggregator[];
     /** Gas price */
     defaultGasPrice?: ethers.BigNumberish;
-} & (
+};
+
+type SigningConfig =
+    | {
+          /** Which chain are we connecting to ? */
+          chain: Chain;
+          /**
+           * (optional) Who will sign the transactions ? (required if you plan to perform transactions).
+           * This signer will be connected to the provider that this library will build.
+           */
+          signer?: ethers.Signer;
+          /** Specify which user will sign the transaction, eventually */
+          userAddress?: HexString;
+      }
+    | {
+          /**
+           * A signer that is already connected to the network provider you are targetting.
+           * @example Wallet.fromMnemonic(words).connect(myProvider)
+           */
+          signer: ethers.Signer;
+      }
+    | {
+          /** Specify an already built provider to connected to the right network */
+          provider: ethers.providers.Provider;
+          /** Specify which user will sign the transaction, eventually */
+          userAddress: HexString;
+      }
+    | {
+          /** Specify how we should connect to the RPC network (will result in an anonymous context) */
+          network: Networkish;
+          /** Specify which user will sign the transaction, eventually */
+          userAddress: HexString;
+      };
+
+type ZeroExApiConfig =
     | {
           /**
            * Provide a custom 0x fetcher (optional)
@@ -47,38 +83,20 @@ export type NestedConnection = {
            * Must return something like 'https://polygon.api.0x.org/',  (ending with slash, and which depends on chain)
            */
           zeroExApi?: (forChain: Chain) => string;
-      }
-) &
-    (
-        | {
-              /** Which chain are we connecting to ? */
-              chain: Chain;
-              /**
-               * (optional) Who will sign the transactions ? (required if you plan to perform transactions).
-               * This signer will be connected to the provider that this library will build.
-               */
-              signer?: ethers.Signer;
-          }
-        | {
-              /**
-               * A signer that is already connected to the network provider you are targetting.
-               * @example Wallet.fromMnemonic(words).connect(myProvider)
-               */
-              signer: ethers.Signer;
-          }
-        | {
-              /** Specify an already built provider to connected to the right network */
-              provider: ethers.providers.Provider;
-          }
-        | {
-              /** Specify how we should connect to the RPC network (will result in an anonymous context) */
-              network: Networkish;
-          }
-    );
+      };
 
 export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<INestedContracts> {
-    let { chain, factoryAddress, provider, signer, zeroExFetcher, zeroExUrl, paraSwapFetcher, defaultGasPrice } =
-        await readConfig(_opts);
+    let {
+        chain,
+        factoryAddress,
+        provider,
+        signer,
+        zeroExFetcher,
+        zeroExUrl,
+        userAddress,
+        paraSwapFetcher,
+        defaultGasPrice,
+    } = await readConfig(_opts);
 
     // build contracts
     let nestedFactory = new ethers.Contract(factoryAddress, factoryAbi, provider);
@@ -92,6 +110,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
     const tools = new ChainTools(
         chain,
         signer,
+        userAddress,
         provider,
         nestedFactoryInterface,
         nestedFactory,
@@ -115,11 +134,13 @@ async function readConfig(_opts: NestedConnection): Promise<{
     signer?: ethers.Signer;
     provider: ethers.providers.Provider;
     defaultGasPrice?: ethers.BigNumber;
+    userAddress: HexString;
 }> {
     let chain: Chain;
     let cfg: ConnectionConfig;
     let provider: ethers.providers.Provider;
     let signer: ethers.Signer | undefined;
+    let userAddress: HexString;
 
     if ('chain' in _opts) {
         chain = _opts.chain;
@@ -156,6 +177,15 @@ async function readConfig(_opts: NestedConnection): Promise<{
         cfg = defaultContracts[chain];
     }
 
+    if (signer) {
+        userAddress = (await signer.getAddress()) as HexString;
+    } else {
+        if (!('userAddress' in _opts) || !_opts.userAddress) {
+            throw new Error('When there is no signer provided, you must at least provide the "userAddress" option');
+        }
+        userAddress = _opts.userAddress;
+    }
+
     const factoryAddress = _opts.contract ?? cfg?.factoryAddress;
     if (!cfg || !factoryAddress) {
         throw new Error('Invalid connection config: Cannot determine the contract to use');
@@ -170,5 +200,6 @@ async function readConfig(_opts: NestedConnection): Promise<{
         zeroExFetcher: 'zeroExFetcher' in _opts ? _opts.zeroExFetcher : undefined,
         zeroExUrl: 'zeroExApi' in _opts ? _opts.zeroExApi : undefined,
         paraSwapFetcher: _opts.paraSwapFetcher,
+        userAddress,
     } as const;
 }

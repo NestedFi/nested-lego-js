@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers';
 import { HasOrdersImpl } from './has-orders';
 import { _HasOrder, _TokenOrder } from './internal-types';
 import {
@@ -12,7 +12,7 @@ import {
     TokenOrder,
 } from './public-types';
 import { TokenOrderImpl } from './token-order';
-import { as, BatchedInputOrders, lazySync, normalize, safeMult } from './utils';
+import { as, BatchedInputOrders, normalize } from './utils';
 
 export abstract class PortfolioTokenAdderBase extends HasOrdersImpl implements CanAddTokensOperation, _HasOrder {
     constructor(readonly parent: INestedContracts, readonly spentToken: HexString) {

@@ -55,6 +55,7 @@ export class ChainTools implements NestedTools {
     constructor(
         readonly chain: Chain,
         private signer: Signer | undefined,
+        readonly userAddress: HexString,
         readonly provider: providers.Provider,
         readonly factoryInterface: utils.Interface,
         readonly factoryContract: Contract,

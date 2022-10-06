@@ -233,10 +233,8 @@ export class TokenOrderImpl implements _TokenOrder {
                 timeout: setTimeout(async () => {
                     try {
                         // build the swap order
-                        const userAddress =
-                            ((await this.parent.parent.maybeSigner?.getAddress()) as HexString) ?? ZERO_ADDRESS;
                         const aggregatorQuote = await this.parent.tools.fetchLowestQuote({
-                            userAddress,
+                            userAddress: this.parent.tools.userAddress,
                             chain: this.chain,
                             slippage: this.slippage,
                             spendToken: wrap(this.chain, this.inputToken),

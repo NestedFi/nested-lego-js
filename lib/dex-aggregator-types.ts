@@ -4,7 +4,7 @@ import { Chain, HexString } from './public-types';
 export type DexAggregator = 'ZeroEx' | 'Paraswap';
 
 export type AggregatorRequest = {
-    readonly userAddress?: HexString;
+    readonly userAddress: HexString;
     readonly chain: Chain;
     /** Token you'd like to spend */
     readonly spendToken: HexString;

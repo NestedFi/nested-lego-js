@@ -1,12 +1,12 @@
 import { BigNumber } from 'ethers';
-import { formatEther, formatUnits, parseUnits } from 'ethers/lib/utils';
+import { formatUnits } from 'ethers/lib/utils';
 import { ParaSwap, APIError, SwapSide } from 'paraswap';
 import { OptimalRate } from 'paraswap-core';
 import { defaultContracts } from './default-contracts';
 import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 import { ParaSwapAnswer } from './paraswap-types';
-import { Chain, HexString, ZERO_ADDRESS } from './public-types';
-import { divideBigNumbers, safeMult } from './utils';
+import { Chain, HexString } from './public-types';
+import { safeMult } from './utils';
 
 export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise<ParaSwapAnswer | null> {
     switch (config.chain) {
@@ -48,8 +48,8 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         srcAmount.toString(),
         destAmount.toString(),
         priceRoute,
-        config.userAddress ?? ZERO_ADDRESS,
-        undefined,
+        config.userAddress,
+        'nested.fi',
         undefined,
         undefined,
         undefined,

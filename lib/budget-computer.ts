@@ -35,6 +35,7 @@ export async function computeDeposit(
                   })
                 : tools
                       .fetchLowestQuote({
+                          userAddress: tools.userAddress,
                           chain: tools.chain,
                           buyToken: h.token,
                           spendToken: addToken,
@@ -88,6 +89,7 @@ export async function computeWithdrawal(
                   })
                 : tools
                       .fetchLowestQuote({
+                          userAddress: tools.userAddress,
                           chain: tools.chain,
                           buyToken: withdrawToken,
                           spendToken: h.token,
