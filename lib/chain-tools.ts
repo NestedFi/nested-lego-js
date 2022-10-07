@@ -8,9 +8,11 @@ import {
     NATIVE_TOKEN,
     NestedTools,
     NftEventType,
+    QuoteErrorReasons,
+    QuoteFailedError,
 } from './public-types';
 import { ERC20_ABI } from './default-contracts';
-import { checkHasSigner, lazy, normalize, safeMult, wrap } from './utils';
+import { checkHasSigner, lazy, normalize, notNil, safeMult, wrap } from './utils';
 import { ZeroExFetcher, ZeroExRequest, ZeroXAnswer } from './0x-types';
 import recordsAbi from './nested-records.json';
 import feeSplitterAbi from './nested-fee-splitter.json';
@@ -235,6 +237,24 @@ export class ChainTools implements NestedTools {
             .map(resp => (resp as PromiseFulfilledResult<AggregatorQuoteResponse>).value);
 
         if (successfulQuotes.length === 0) {
+            // find "legit" errors
+            const quoteFailedErrors: QuoteFailedError[] = notNil(
+                dexAggrQuotesResp.map(x =>
+                    x.status === 'rejected' && x.reason instanceof QuoteFailedError ? x.reason : null,
+                ),
+            );
+            if (quoteFailedErrors.length === 1) {
+                // if only one error, then rethrow it
+                throw quoteFailedErrors[0];
+            } else if (quoteFailedErrors.length) {
+                // if has a liquidity error, then throw a liquidity error
+                if (quoteFailedErrors.some(x => x.reason === QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY)) {
+                    throw new QuoteFailedError(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
+                }
+                // else, throw an unkown error
+                throw new QuoteFailedError(QuoteErrorReasons.UNKNOWN_ERROR);
+            }
+            // dont know why all aggregator failed
             throw new Error('All DEX aggregators quotes were unsuccessful');
         }
 

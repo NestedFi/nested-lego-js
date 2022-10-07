@@ -5,7 +5,7 @@ import { OptimalRate } from 'paraswap-core';
 import { defaultContracts } from './default-contracts';
 import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 import { ParaSwapAnswer } from './paraswap-types';
-import { Chain, HexString } from './public-types';
+import { Chain, HexString, QuoteErrorReasons, QuoteFailedError } from './public-types';
 import { safeMult } from './utils';
 
 export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise<ParaSwapAnswer | null> {
@@ -30,6 +30,9 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         { excludeDEXS: '0x' },
     );
     if ('message' in priceRoute) {
+        if (priceRoute.message === 'No routes found with enough liquidity') {
+            throw new QuoteFailedError(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
+        }
         throw new Error(`Failed to fetch ParaSwap quote: ${priceRoute.message} (${priceRoute.status})`);
     }
 

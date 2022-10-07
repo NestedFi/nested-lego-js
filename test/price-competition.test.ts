@@ -1,6 +1,6 @@
 import 'mocha';
-import { assert } from 'chai';
-import { Chain, connect, HexString, NestedConnection, ZeroXAnswer } from '../lib';
+import { assert, expect } from 'chai';
+import { Chain, connect, HexString, NestedConnection, QuoteErrorReasons, QuoteFailedError, ZeroXAnswer } from '../lib';
 import { poly_sushi, poly_usdc, testConfig, TEST_SLIPPAGE } from './test-utils';
 import { AggregatorRequest, DexAggregator } from '../lib/dex-aggregator-types';
 import { ParaSwapAnswer, ParaSwapFetcher } from '../lib/paraswap-types';
@@ -54,6 +54,53 @@ describe('Price competition', () => {
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         assert.equal(ptf.orders[0].operator, 'ZeroEx');
+    });
+
+    it('should throw a QuoteFailed error when using 0x', async () => {
+        const instance = await connect({
+            ...testConfig(),
+            excludeDexAggregators: ['Paraswap'],
+        });
+        const ptf = instance.createPortfolio(poly_usdc.contract);
+        try {
+            await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(BigNumber.from(10).pow(50));
+        } catch (e: any) {
+            expect(e).instanceOf(QuoteFailedError);
+            expect(e.reason).to.equal(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
+            return;
+        }
+        assert.fail('Should have thrown an error');
+    });
+
+    it('should throw a QuoteFailed error when using paraswap', async () => {
+        const instance = await connect({
+            ...testConfig(),
+            excludeDexAggregators: ['ZeroEx'],
+        });
+        const ptf = instance.createPortfolio(poly_usdc.contract);
+        try {
+            await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(BigNumber.from(10).pow(50));
+        } catch (e: any) {
+            expect(e).instanceOf(QuoteFailedError);
+            expect(e.reason).to.equal(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
+            return;
+        }
+        assert.fail('Should have thrown an error');
+    });
+
+    it('should throw a QuoteFailed error when using all aggregators', async () => {
+        const instance = await connect({
+            ...testConfig(),
+        });
+        const ptf = instance.createPortfolio(poly_usdc.contract);
+        try {
+            await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setOutputAmount(BigNumber.from(10).pow(50));
+        } catch (e: any) {
+            expect(e).instanceOf(QuoteFailedError);
+            expect(e.reason).to.equal(QuoteErrorReasons.INSUFFICIENT_ASSET_LIQUIDITY);
+            return;
+        }
+        assert.fail('Should have thrown an error');
     });
 });
 
