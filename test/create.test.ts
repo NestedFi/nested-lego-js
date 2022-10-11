@@ -19,6 +19,7 @@ describe('Create', () => {
 
     it('Can create a simple portfolio with input budget', async () => {
         const beforeSpent = await instance.tools.balanceOf(poly_usdc.contract);
+        assert.isTrue(beforeSpent.gt(poly_usdc.smallAmount), 'not enough usdc');
 
         // swap USDC for SUSHI
         const ptf = instance.createPortfolio(poly_usdc.contract);

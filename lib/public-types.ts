@@ -370,6 +370,17 @@ export interface Holding {
 }
 
 export type NftEventType = 'NftCreated' | 'NftUpdated' | 'NftBurned';
+
+export interface FeesRates {
+    /** Approximate ratio of entry fees (entryExact / 10000) */
+    entry: number;
+    /** Exact ratio of entry fees (will be divided by 10000) */
+    entryExact: BigNumber;
+    /** Approximate ratio of exit fees (entryExact / 10000) */
+    exit: number;
+    /** Exact ratio of exit fees (will be divided by 10000) */
+    exitExact: BigNumber;
+}
 export interface NestedTools {
     readonly chain: Chain;
     readonly factoryInterface: utils.Interface;
@@ -397,7 +408,7 @@ export interface NestedTools {
     /** Gets the NestedAsset contract */
     assetContract(): PromiseLike<Contract>;
     /** Gets fees rate from Factory contract*/
-    feesRates(): PromiseLike<{ entry: number; exit: number }>;
+    feesRates(): PromiseLike<FeesRates>;
     /** Fetch a quote from 0x */
     fetch0xSwap(request: ZeroExRequest): PromiseLike<ZeroXAnswer>;
     /** Fetch a quote from ParaSwap */

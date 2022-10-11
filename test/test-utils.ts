@@ -9,10 +9,15 @@ import { getNodejsLibs } from 'evm-js-emulator/src/utils';
 import { lazy } from '../lib/utils';
 
 export function testConfig(anonymous?: boolean): NestedConnection {
-    if (!process.env.MNEMONIC) {
+    // if (!process.env.MNEMONIC) {
+    //     throw new Error('Please set MNEMONIC environment variable');
+    // }
+    // const userAddress = Wallet.fromMnemonic(process.env.MNEMONIC).address as HexString;
+
+    if (!/^0x[a-fA-F\d+]{40}$/.test(process.env.USER_ADDRESS ?? '')) {
         throw new Error('Please set MNEMONIC environment variable');
     }
-    const userAddress: HexString = '0x8B09AB0612d4E1D44Cf0C1641b5d0be43a3aec9F';
+    const userAddress = process.env.USER_ADDRESS as HexString;
     const contract = '0x53b89BAb5a8D589E5c3bE4642A7128C3F27da790';
     const provider = new TestProvider(userAddress, contract);
     const init = lazy(() => provider.fetchNames());
@@ -39,8 +44,8 @@ export function testConfig(anonymous?: boolean): NestedConnection {
                       },
                       estimateGas: () => Promise.resolve(BigNumber.from(0x123)),
                       _isSigner: true,
-                      // Wallet.fromMnemonic(process.env.MNEMONIC)
                   } as any,
+                  // signer: Wallet.fromMnemonic(process.env.MNEMONIC)
               }),
         zeroExFetcher: cache('0x', x => defaultZeroExFetcher(x, undefined)),
         paraSwapFetcher: cache('paraswap', defaultParaSwapFetcher),
