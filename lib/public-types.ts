@@ -421,6 +421,10 @@ export interface NestedTools {
     approve(token: HexString, amount?: BigNumberish): Promise<ContractTransaction>;
     /** Prepare calldata to be executed (computes gas limit, ...)  */
     prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void>;
+    /** Get an ERC20 contract */
+    tokenContract(token: HexString): Contract;
+    /** Get the allowance of a contract for a given token */
+    allowance(ofUser: HexString, forContract: HexString, forToken: HexString): Promise<BigNumber>;
 }
 
 export interface INestedContracts {

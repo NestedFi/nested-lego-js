@@ -75,7 +75,7 @@ export class ChainTools implements NestedTools {
         this.assetInterface = new utils.Interface(assetAbi);
     }
 
-    private tokenContract(token: HexString, signed: boolean) {
+    tokenContract(token: HexString, signed?: boolean) {
         token = normalize(token);
         const col = signed ? this._tokensSigned : this._tokensAnon;
         if (col.has(token)) {
@@ -132,13 +132,18 @@ export class ChainTools implements NestedTools {
         return balance;
     }
 
-    async factoryAllowance(ofUser: HexString, forToken: HexString): Promise<BigNumber> {
+    factoryAllowance(ofUser: HexString, forToken: HexString): Promise<BigNumber> {
+        return this.allowance(ofUser, this.factoryContract.address as HexString, forToken);
+    }
+
+    async allowance(ofUser: HexString, forContract: HexString, forToken: HexString): Promise<BigNumber> {
+        forContract = normalize(forContract);
         forToken = normalize(forToken);
         if (forToken === NATIVE_TOKEN) {
             return constants.MaxUint256;
         }
         const contract = this.tokenContract(forToken, true);
-        const allowance = await contract.allowance(ofUser, this.factoryContract.address);
+        const allowance = await contract.allowance(ofUser, forContract);
         return allowance;
     }
 

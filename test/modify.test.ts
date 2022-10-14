@@ -15,9 +15,9 @@ describe('Modify', () => {
 
         console.log('📐 Creating a portfolio...');
         // Create a portfolio with 2 tokens in it
-        const ptf = instance.createPortfolio(native_token.contract);
-        await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
-        await ptf.addToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        const ptf = instance.createPortfolio(poly_usdc.contract);
+        await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
+        await ptf.addToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         await approve(ptf);
         const { idInChain } = await ptf.execute();
         assert.isString(idInChain);
@@ -37,9 +37,23 @@ describe('Modify', () => {
         }
     }
 
-    it('can add token from wallet', async () => {
-        const ptf = instance.addTokensToPortfolio(id, poly_dai.contract);
-        await ptf.addToken(poly_usdc.contract, TEST_SLIPPAGE).setInputAmount(poly_dai.smallAmount);
+    it('can add native token from wallet', async () => {
+        const ptf = instance.addTokensToPortfolio(id, native_token.contract);
+        await ptf.addToken(native_token.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        await approve(ptf);
+        await ptf.execute();
+    });
+
+    it('can add token from native token', async () => {
+        const ptf = instance.addTokensToPortfolio(id, native_token.contract);
+        await ptf.addToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(native_token.smallAmount);
+        await approve(ptf);
+        await ptf.execute();
+    });
+
+    it('can add token from random token', async () => {
+        const ptf = instance.addTokensToPortfolio(id, poly_usdc.contract);
+        await ptf.addToken(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         await approve(ptf);
         await ptf.execute();
     });
@@ -52,6 +66,22 @@ describe('Modify', () => {
             daiQty.div(2),
         );
         await ptf.execute();
+    });
+
+    it('can swap a the whole qty of a token', async () => {
+        // sell 100% of our dai for usdc
+        const ptf = instance.swapSingleToMulti(id, poly_dai.contract);
+        await ptf.swapTo(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(daiQty);
+        await ptf.execute();
+
+        // // check that nothing is left
+        // const records = await instance.tools.recordsContract()
+        // const holdings = await records.tokenHoldings(id) as [HexString[], BigNumber[]];
+        // const mapped = holdings[0].map((token, i) => ({
+        //     token: token.toLowerCase(),
+        //     qty: holdings[1][i],
+        // }));
+        // expect(mapped.filter(x => x.token === poly_dai.contract)).to.deep.equal([], 'should have no dust left');
     });
 
     it('can swap a single token to multiple tokens with output budget (intra-nft)', async () => {
