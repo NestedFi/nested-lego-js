@@ -126,11 +126,11 @@ export function divideBigNumbers(a: BigNumber, b: BigNumber, precision = 18): nu
 }
 
 export function removeFees(amt: BigNumber, feesRate: number) {
-    return safeMult(amt, 1 / (1 + feesRate));
+    return safeMult(amt, 1 - feesRate);
 }
 
 export function addFees(amt: BigNumber, feesRate: number) {
-    return safeMult(amt, 1 + feesRate);
+    return safeMult(amt, 1 / feesRate);
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {
