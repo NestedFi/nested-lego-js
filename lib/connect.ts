@@ -30,7 +30,7 @@ type BaseConfig = {
     /** Provide a custom ParaSwap fetcher (optional) */
     paraSwapFetcher?: ParaSwapFetcher;
     /** Exclude dex aggregator */
-    excludeDexAggregators?: DexAggregator[];
+    onlyUseAggregators?: DexAggregator[];
     /** Gas price */
     defaultGasPrice?: ethers.BigNumberish;
 };
@@ -119,7 +119,7 @@ export async function connect(_opts: ExclusifyUnion<NestedConnection>): Promise<
         paraSwapFetcher,
         _opts.nestedFinanceApi ?? 'https://api.nested.finance',
         _opts.nestedFinanceUi ?? 'https://app.nested.fi',
-        _opts.excludeDexAggregators ?? [],
+        _opts.onlyUseAggregators ?? ['Paraswap', 'ZeroEx'],
         defaultGasPrice,
     );
     return new NestedContractsInstance(chain, tools, signer);

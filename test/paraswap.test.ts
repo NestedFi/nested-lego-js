@@ -17,7 +17,7 @@ describe('Paraswap SDK', () => {
     function getTestConfig(): NestedConnection {
         return {
             ...testConfig(),
-            excludeDexAggregators: ['ZeroEx'],
+            onlyUseAggregators: ['Paraswap'],
         };
     }
 

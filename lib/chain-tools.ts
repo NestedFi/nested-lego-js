@@ -68,7 +68,7 @@ export class ChainTools implements NestedTools {
         readonly _fetchParaSwap: ParaSwapFetcher | undefined,
         readonly nestedFinanceApi: string,
         readonly nestedFinanceUi: string,
-        readonly excludeDexAggregators: DexAggregator[] = [],
+        readonly aggregators: DexAggregator[],
         private defaultGasPrice: BigNumber | undefined,
     ) {
         this.feeSplitterInterface = new utils.Interface(feeSplitterAbi);
@@ -229,7 +229,7 @@ export class ChainTools implements NestedTools {
         };
 
         const dexAggrRequests = Object.values(dexAggregators)
-            .filter(dAggr => !this.excludeDexAggregators.find(name => dAggr.name === name))
+            .filter(dAggr => this.aggregators.some(name => dAggr.name === name))
             .map(async dAggr => {
                 const resp = await dAggr.fetch(request);
                 if (!resp) {

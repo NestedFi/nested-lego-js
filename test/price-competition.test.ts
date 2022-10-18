@@ -16,10 +16,10 @@ describe('Price competition', () => {
     });
     */
 
-    const addTokenExcludingDexAggregator = async (exclude: DexAggregator) => {
+    const addTokenExcludingDexAggregator = async (onlyDex: DexAggregator) => {
         const instance = await connect({
             ...testConfig(),
-            excludeDexAggregators: [exclude],
+            onlyUseAggregators: [onlyDex],
         });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
@@ -27,11 +27,11 @@ describe('Price competition', () => {
     };
 
     it('Excludes 0x from quoting', () => {
-        return addTokenExcludingDexAggregator('ZeroEx');
+        return addTokenExcludingDexAggregator('Paraswap');
     });
 
     it('Excludes ParaSwap from quoting', () => {
-        return addTokenExcludingDexAggregator('Paraswap');
+        return addTokenExcludingDexAggregator('ZeroEx');
     });
 
     it('should pick ParaSwap as cheapest', async () => {
@@ -59,7 +59,7 @@ describe('Price competition', () => {
     it('should throw a QuoteFailed error when using 0x', async () => {
         const instance = await connect({
             ...testConfig(),
-            excludeDexAggregators: ['Paraswap'],
+            onlyUseAggregators: ['ZeroEx'],
         });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         try {
@@ -75,7 +75,7 @@ describe('Price competition', () => {
     it('should throw a QuoteFailed error when using paraswap', async () => {
         const instance = await connect({
             ...testConfig(),
-            excludeDexAggregators: ['ZeroEx'],
+            onlyUseAggregators: ['Paraswap'],
         });
         const ptf = instance.createPortfolio(poly_usdc.contract);
         try {

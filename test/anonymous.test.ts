@@ -6,14 +6,14 @@ import { BigNumber } from '@ethersproject/bignumber';
 
 describe('Anonymous user', () => {
     let instance: INestedContracts;
-    async function setup(excludeDexAggregators: DexAggregator[]) {
+    async function setup(onlyAggregators: DexAggregator[]) {
         instance = await connect({
             ...testConfig(true),
-            excludeDexAggregators,
+            onlyUseAggregators: onlyAggregators,
         });
     }
     beforeEach(async () => {
-        await setup(['Paraswap']);
+        await setup(['ZeroEx']);
     });
 
     it('builds a portfolio creation with 0x', async () => {
@@ -23,7 +23,7 @@ describe('Anonymous user', () => {
     });
 
     it('builds a portfolio creation with paraswap', async () => {
-        await setup(['ZeroEx']);
+        await setup(['Paraswap']);
         const ptf = instance.createPortfolio(poly_usdc.contract);
         await ptf.addToken(poly_sushi.contract, TEST_SLIPPAGE).setInputAmount(poly_usdc.smallAmount);
         assert.isString(ptf.buildCallData()?.data);

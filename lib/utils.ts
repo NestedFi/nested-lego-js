@@ -125,12 +125,12 @@ export function divideBigNumbers(a: BigNumber, b: BigNumber, precision = 18): nu
     return toNumber(bigResult, precision);
 }
 
-export function removeFees(amt: BigNumber, feesRate: number) {
-    return safeMult(amt, 1 - feesRate);
+export function removeFees(amt: BigNumber, feesRate: BigNumber) {
+    return amt.mul(10000).div(feesRate.add(10000));
 }
 
-export function addFees(amt: BigNumber, feesRate: number) {
-    return safeMult(amt, 1 / feesRate);
+export function addFees(amt: BigNumber, feesRate: BigNumber) {
+    return amt.mul(feesRate.add(10000)).div(10000);
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {

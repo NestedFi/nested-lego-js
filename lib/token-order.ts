@@ -19,7 +19,7 @@ export class TokenOrderImpl implements _TokenOrder {
     fees!: TokenOrderFees;
     estimatedPriceImpact: number = 0;
     operator: DexAggregator | null = null;
-    private feesRate!: number;
+    private feesRate!: BigNumber;
 
     constructor(
         private parent: _HasOrder,
@@ -138,9 +138,9 @@ export class TokenOrderImpl implements _TokenOrder {
         return (this.qtySetter = tokenFetch);
     }
 
-    private async _getFeesRate(): Promise<number> {
+    private async _getFeesRate(): Promise<BigNumber> {
         const feesRates = await this.parent.tools.feesRates();
-        return this.actionType === 'entry' ? feesRates.entry : feesRates.exit;
+        return this.actionType === 'entry' ? feesRates.entryExact : feesRates.exitExact;
     }
 
     async changeSlippage(slippage: number): Promise<boolean> {
@@ -233,6 +233,8 @@ export class TokenOrderImpl implements _TokenOrder {
                 timeout: setTimeout(async () => {
                     try {
                         // build the swap order
+                        const spendQty =
+                            this.feesOn === 'input' ? removeFees(this.inputQty, this.feesRate) : this.inputQty;
                         const aggregatorQuote = await this.parent.tools.fetchLowestQuote({
                             userAddress: this.parent.tools.userAddress,
                             chain: this.chain,
@@ -243,10 +245,7 @@ export class TokenOrderImpl implements _TokenOrder {
                                 ? {
                                       // remove fee from the input amount if necessary
                                       //  (we dont want to swap fees)
-                                      spendQty:
-                                          this.feesOn === 'input'
-                                              ? removeFees(this.inputQty, this.feesRate)
-                                              : this.inputQty,
+                                      spendQty,
                                   }
                                 : {
                                       boughtQty: this.outputQty,
