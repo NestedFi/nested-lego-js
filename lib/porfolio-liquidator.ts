@@ -41,13 +41,13 @@ export class PortfolioLiquidatorImpl implements PortfolioLiquidator, _HasOrder {
     }
 
     async refreshAssets(): Promise<TokenLiquidator[]> {
-        const assets = await this.parent.getAssets(this.nftId);
+        const assets = await this.parent.getAssets(this.nftId, true);
         this._orders = await Promise.all(assets.map(a => this._sellToken(a)));
         return [...this._orders];
     }
 
     private async _sellToken({ token, amount: qty }: Holding) {
-        const ret = new TokenOrderImpl(this, token, this.receivedToken, this.defaultSlippage, 'output', 'exit');
+        const ret = new TokenOrderImpl(this, token, this.receivedToken, this.defaultSlippage, 'output', 'exit', true);
         await ret.setInputAmount(qty);
         return ret;
     }
