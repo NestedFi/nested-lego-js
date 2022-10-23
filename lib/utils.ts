@@ -126,11 +126,30 @@ export function divideBigNumbers(a: BigNumber, b: BigNumber, precision = 18): nu
 }
 
 export function removeFees(amt: BigNumber, feesRate: BigNumber) {
-    return amt.mul(10000).div(feesRate.add(10000));
+    // this is the amount that corresponds to the given amount, without fees
+    // ... but it will factor a rounding amount when re-adding fees on top of it.
+    let spent = amt.mul(10000).div(feesRate.add(10000));
+
+    // add as much as possible to the amount without fees so the rounding error
+    // in fees computation will be embbeded in this amount
+    // see _submitInOrders() implementation in contracts
+    while (addFees(spent, feesRate).lt(amt)) {
+        spent = spent.add(1);
+    }
+
+    // safety check
+    if (!addFees(spent, feesRate).eq(amt)) {
+        throw new Error(`Catastrophic error when computing fees: cannot remove fees from ${amt.toHexString()}`);
+    }
+    return spent;
 }
 
 export function addFees(amt: BigNumber, feesRate: BigNumber) {
-    return amt.mul(feesRate.add(10000)).div(10000);
+    return amt.add(feesFor(amt, feesRate));
+}
+
+export function feesFor(amt: BigNumber, feesRate: BigNumber) {
+    return amt.mul(feesRate).div(10000);
 }
 
 export function wrap(chain: Chain, token: HexString): HexString {
