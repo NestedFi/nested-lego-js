@@ -38,4 +38,13 @@ describe('Utilities', () => {
         const removed = removeFees(BigNumber.from(10_031), rate);
         expect(removed.toNumber()).to.equal(10_001);
     });
+
+    it('bugfix: can remove fees from 9953', () => {
+        const rate = BigNumber.from(80);
+        // used to throw an error
+        const withoutFees = removeFees(BigNumber.from(9953), rate);
+
+        // just check that we're ok
+        expect(addFees(withoutFees, rate).toNumber()).to.deep.equal(9952);
+    });
 });

@@ -58,7 +58,7 @@ function cache<T extends (...args: any[]) => Promise<any>>(name: string, fn: T):
         const hash = `${name}/${objectHash(args)}.json`;
         const cached = readCache?.(hash);
         if (cached) {
-            console.log(args, cached);
+            // console.log(args, cached);
             return JSON.parse(cached);
         }
         const value = await fn(...args);

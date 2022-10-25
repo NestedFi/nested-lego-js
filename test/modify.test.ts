@@ -121,7 +121,7 @@ for (const aggregator of TEST_AGGREGATORS) {
 
             // sell 100% of our usdc for dai
             const ptf = instance.swapSingleToMulti(id, poly_usdc.contract);
-            await ptf.swapTo(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(BigNumber.from(daiQty));
+            await ptf.swapTo(poly_dai.contract, TEST_SLIPPAGE).setInputAmount(BigNumber.from(amt));
             await ptf.execute();
 
             // check that nothing is left

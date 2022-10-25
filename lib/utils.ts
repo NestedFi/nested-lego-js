@@ -137,9 +137,13 @@ export function removeFees(amt: BigNumber, feesRate: BigNumber) {
         spent = spent.add(1);
     }
 
-    // safety check
-    if (!addFees(spent, feesRate).eq(amt)) {
-        throw new Error(`Catastrophic error when computing fees: cannot remove fees from ${amt.toHexString()}`);
+    // ... but there are some cases that cannot be compensated
+    // for instance, there is no way to remove 0.8% fees from quantity 9953
+    //  (nb: there is a UT for that, if you want to convince yourself)
+    //  => we'll prefer a smaller spent amount (fees will be prioritary)
+    //  => we will have 0x1 underspending
+    while (addFees(spent, feesRate).gt(amt)) {
+        spent = spent.sub(1);
     }
     return spent;
 }

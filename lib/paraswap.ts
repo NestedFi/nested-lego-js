@@ -28,6 +28,8 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         config.userAddress,
         swapSide,
         { excludeDEXS: '0x' },
+        config.spendTokenDecimals,
+        config.buyTokenDecimals,
     );
     if ('message' in priceRoute) {
         if (priceRoute.message === 'No routes found with enough liquidity') {
