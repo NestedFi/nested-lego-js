@@ -113,6 +113,7 @@ const fetchParaSwapMocked: ParaSwapFetcher = (request: AggregatorRequest): Promi
             value: '0',
             data: '0x',
             chainId: 0,
+            gasPrice: '0',
         },
     });
 };

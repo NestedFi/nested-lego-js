@@ -1,12 +1,14 @@
 import { BigNumber } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
-import { ParaSwap, APIError, SwapSide } from 'paraswap';
+import { ParaSwap, SwapSide } from '@paraswap/sdk';
 import { OptimalRate } from 'paraswap-core';
 import { defaultContracts } from './default-contracts';
 import { AggregatorQuoteResponse, AggregatorRequest } from './dex-aggregator-types';
 import { ParaSwapAnswer } from './paraswap-types';
 import { Chain, HexString, QuoteErrorReasons, QuoteFailedError } from './public-types';
 import { safeMult } from './utils';
+import { APIError } from '@paraswap/sdk/dist/legacy';
+import fetch from 'node-fetch';
 
 export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise<ParaSwapAnswer | null> {
     switch (config.chain) {
@@ -18,7 +20,10 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
 
     const networkId = defaultContracts[config.chain].chainId as 1 | 56 | 137 | 43114;
 
-    const paraSwap = new ParaSwap(networkId);
+    const paraSwap = new ParaSwap({
+        chainId: networkId,
+        fetch: fetch as any,
+    });
     let amount = 'spendQty' in config ? config.spendQty : config.boughtQty;
     const swapSide = 'spendQty' in config ? SwapSide.SELL : SwapSide.BUY;
     const priceRoute: OptimalRate | APIError = await paraSwap.getRate(
@@ -27,7 +32,7 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         amount.toString(),
         config.userAddress,
         swapSide,
-        { excludeDEXS: '0x' },
+        { excludeDEXS: ['0x'] },
         config.spendTokenDecimals,
         config.buyTokenDecimals,
     );
