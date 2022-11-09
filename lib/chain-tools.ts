@@ -4,6 +4,7 @@ import {
     Chain,
     CreatePortfolioResult,
     ExecOptions,
+    GenericCallData,
     HexString,
     NATIVE_TOKEN,
     NestedTools,
@@ -151,12 +152,14 @@ export class ChainTools implements NestedTools {
         token = normalize(token);
         const toApprove = amount ? await this.toTokenAmount(token, amount) : constants.MaxUint256;
         const contract = this.tokenContract(token, true);
-        return await contract.approve(this.factoryContract.address, toApprove);
+        const gasOpts = await this.estimateGas({ to: this.factoryContract.address as HexString });
+        return await contract.approve(this.factoryContract.address, toApprove, gasOpts);
     }
 
     async prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void> {
-        callData.gasLimit = safeMult(await checkHasSigner(this.signer).estimateGas(callData), 1.1);
-        callData.gasPrice = options?.gasPrice ?? this.defaultGasPrice;
+        const gas = await this.estimateGas(callData, options);
+        callData.gasLimit = gas.gasLimit;
+        callData.gasPrice = gas.gasPrice;
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */
@@ -268,5 +271,38 @@ export class ChainTools implements NestedTools {
         return successfulQuotes.sort((quoteA, quoteB) =>
             BigNumber.from(quoteB.buyAmount).gt(BigNumber.from(quoteA.buyAmount)) ? 1 : -1,
         )[0];
+    }
+
+    async estimateGas(callData: GenericCallData, options?: ExecOptions): Promise<ExecOptions> {
+        let gasLimit: BigNumber | undefined = undefined;
+        if (options?.gasLimit) {
+            gasLimit = options.gasLimit;
+        } else {
+            try {
+                gasLimit = await (await checkHasSigner(this.signer)).estimateGas(callData);
+                // increase gas limit by 10%
+                gasLimit = safeMult(gasLimit, 1.1);
+            } catch (e) {
+                console.warn('Failed to estimate gas limit');
+            }
+        }
+        let gasPrice: BigNumber | undefined = undefined;
+        if (options?.gasPrice) {
+            gasPrice = options.gasPrice;
+        } else {
+            try {
+                gasPrice = await (await checkHasSigner(this.signer)).getGasPrice();
+            } catch (e) {
+                // MagicLink specific logic: "for a transaction on Optimism, the gas price should be hard-coded to 15000000"
+                // https://magic.link/posts/magic-optimism#connecting-to-ethereum-optimism
+                if (this.chain === Chain.opti) {
+                    console.warn('Failed to estimate gas price, using default value.');
+                    gasPrice = BigNumber.from(15000000);
+                } else {
+                    console.warn('Failed to estimate gas price');
+                }
+            }
+        }
+        return { gasLimit, gasPrice: gasPrice ?? this.defaultGasPrice };
     }
 }
