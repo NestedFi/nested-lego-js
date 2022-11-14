@@ -1,14 +1,4 @@
-import {
-    BigNumber,
-    BigNumberish,
-    constants,
-    Contract,
-    ContractTransaction,
-    ethers,
-    providers,
-    Signer,
-    utils,
-} from 'ethers';
+import { BigNumber, BigNumberish, constants, Contract, ContractTransaction, providers, Signer, utils } from 'ethers';
 import {
     CallData,
     Chain,
