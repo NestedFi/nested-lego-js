@@ -152,7 +152,6 @@ export class ChainTools implements NestedTools {
         token = normalize(token);
         const toApprove = amount ? await this.toTokenAmount(token, amount) : constants.MaxUint256;
         const contract = this.tokenContract(token, true);
-        // const gasLimit = await contract.estimateGas.approve(this.factoryContract.address, toApprove);
         const gasOpts = await this.estimateGas({
             to: this.factoryContract.address as HexString,
             value: toApprove,
