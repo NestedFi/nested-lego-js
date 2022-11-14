@@ -1,4 +1,14 @@
-import { BigNumber, BigNumberish, constants, Contract, ContractTransaction, providers, Signer, utils } from 'ethers';
+import {
+    BigNumber,
+    BigNumberish,
+    constants,
+    Contract,
+    ContractTransaction,
+    ethers,
+    providers,
+    Signer,
+    utils,
+} from 'ethers';
 import {
     CallData,
     Chain,
@@ -152,14 +162,22 @@ export class ChainTools implements NestedTools {
         token = normalize(token);
         const toApprove = amount ? await this.toTokenAmount(token, amount) : constants.MaxUint256;
         const contract = this.tokenContract(token, true);
-        const gasOpts = await this.estimateGas({ to: this.factoryContract.address as HexString });
+        // const gasLimit = await contract.estimateGas.approve(this.factoryContract.address, toApprove);
+        const gasOpts = await this.estimateGas({
+            to: this.factoryContract.address as HexString,
+            value: toApprove,
+            data: contract.interface.encodeFunctionData('approve', [
+                this.factoryContract.address,
+                toApprove,
+            ]) as HexString,
+        });
         return await contract.approve(this.factoryContract.address, toApprove, gasOpts);
     }
 
     async prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void> {
-        const gas = await this.estimateGas(callData, options);
-        callData.gasLimit = gas.gasLimit;
-        callData.gasPrice = gas.gasPrice;
+        const { gasLimit, gasPrice } = await this.estimateGas(callData, options);
+        callData.gasLimit = gasLimit;
+        callData.gasPrice = gasPrice;
     }
 
     /** Reads a transaction logs that has called NestedFactory.create */
@@ -274,16 +292,17 @@ export class ChainTools implements NestedTools {
     }
 
     async estimateGas(callData: GenericCallData, options?: ExecOptions): Promise<ExecOptions> {
+        const signer = await checkHasSigner(this.signer);
         let gasLimit: BigNumber | undefined = undefined;
         if (options?.gasLimit) {
             gasLimit = options.gasLimit;
         } else {
             try {
-                gasLimit = await (await checkHasSigner(this.signer)).estimateGas(callData);
+                gasLimit = await signer.estimateGas(callData);
                 // increase gas limit by 10%
                 gasLimit = safeMult(gasLimit, 1.1);
             } catch (e) {
-                console.warn('Failed to estimate gas limit');
+                console.warn('Failed to estimate gas limit', e);
             }
         }
         let gasPrice: BigNumber | undefined = undefined;
@@ -291,7 +310,7 @@ export class ChainTools implements NestedTools {
             gasPrice = options.gasPrice;
         } else {
             try {
-                gasPrice = await (await checkHasSigner(this.signer)).getGasPrice();
+                gasPrice = await signer.getGasPrice();
             } catch (e) {
                 // MagicLink specific logic: "for a transaction on Optimism, the gas price should be hard-coded to 15000000"
                 // https://magic.link/posts/magic-optimism#connecting-to-ethereum-optimism
@@ -299,7 +318,7 @@ export class ChainTools implements NestedTools {
                     console.warn('Failed to estimate gas price, using default value.');
                     gasPrice = BigNumber.from(15000000);
                 } else {
-                    console.warn('Failed to estimate gas price');
+                    console.warn('Failed to estimate gas price', e);
                 }
             }
         }
