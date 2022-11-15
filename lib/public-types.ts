@@ -38,17 +38,22 @@ export interface CreatePortfolioMetadata extends PorfolioMetadata {
     originalPortfolioId?: PortfolioIdIsh;
 }
 
-export interface CallData {
+export interface GenericCallData {
     /** Contract to call (= address of the NestedFactory contract) */
     to: HexString;
     /** Call data to send */
-    data: HexString;
+    data?: HexString;
     /** Value that must be sent as native token */
     value?: BigNumber;
     /** Gas limit to use */
     gasLimit?: BigNumber;
     /** Gas limit to use */
     gasPrice?: BigNumber;
+}
+
+export interface CallData extends GenericCallData {
+    /** Call data to send */
+    data: HexString;
 }
 
 export interface TokenOrderFees {
@@ -190,6 +195,7 @@ export interface PortfolioCreator extends CanAddTokensOperation {
 
 export interface ExecOptions {
     gasPrice?: BigNumber;
+    gasLimit?: BigNumber;
 }
 
 export interface CreatePortfolioResult {
@@ -397,6 +403,8 @@ export interface NestedTools {
     approve(token: HexString, amount?: BigNumberish): Promise<ContractTransaction>;
     /** Prepare calldata to be executed (computes gas limit, ...)  */
     prepareCalldata(callData: CallData, options?: ExecOptions): Promise<void>;
+    /** Get estimations for gasLimit and gasPrice, given generic call data */
+    estimateGas(callData: GenericCallData, options?: ExecOptions): Promise<ExecOptions>;
 }
 
 export interface INestedContracts {
