@@ -1,11 +1,10 @@
 {
     "name": "@nested-finance/lego-contracts",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "main": "index.js",
     "license": "MIT",
     "repository": "https://github.com/NestedFi/nested-lego-js",
     "scripts": {
-        "prepare": "husky install",
         "build": "rm -rf dist && tsc --project tsconfig.build.json && cp package.json dist/package.json && cp README.md dist/README.md",
         "release": "npm run build && cd dist && npm publish --access public --ignore-scripts",
         "typecheck": "tsc --project tsconfig.json --noEmit"
