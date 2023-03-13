@@ -33,6 +33,11 @@ export interface PorfolioMetadata {
     name?: string;
     /** Provide some tags for the underlying NFT  (ex: ['defi'])*/
     tags?: string[];
+    /**
+     * If this is set, then this NFT was created for a trading competition (but it's
+     * NOT guaranteed to meet the requirements to be eligible for the competition)
+     */
+    tradingCompId?: string;
 }
 
 export interface CreatePortfolioMetadata extends PorfolioMetadata {
