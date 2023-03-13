@@ -88,6 +88,7 @@ export class PortfolioCreatorImpl extends PortfolioTokenAdderBase implements Por
                     meta: {
                         name: this.metadata.name ?? '',
                         tags: this.metadata?.tags ?? [],
+                        tradingCompId: this.metadata?.tradingCompId,
                     },
                     tx: `${this.parent.chain}:${transactionHash}`,
                     owner: `${this.parent.chain}:${from}`,
