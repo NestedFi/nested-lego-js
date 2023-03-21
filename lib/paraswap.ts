@@ -32,7 +32,7 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         amount.toString(),
         config.userAddress,
         swapSide,
-        { excludeDEXS: ['0x'] },
+        { excludeDEXS: ['0x'], partner: 'nested' },
         config.spendTokenDecimals,
         config.buyTokenDecimals,
     );
