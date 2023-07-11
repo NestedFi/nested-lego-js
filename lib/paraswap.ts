@@ -63,7 +63,7 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         undefined,
         undefined,
         undefined,
-        { ignoreChecks: true, ignoreGasEstimate: true },
+        { ignoreChecks: true, ignoreGasEstimate: true, excludeDEXS: ['ParaSwapPool', 'ParaSwapLimitOrders'] },
         config.spendTokenDecimals,
         config.buyTokenDecimals,
     );
