@@ -32,7 +32,7 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         amount.toString(),
         config.userAddress,
         swapSide,
-        { excludeDEXS: ['0x'], partner: 'nested' },
+        { excludeDEXS: ['0x', 'ParaSwapPool', 'ParaSwapLimitOrders'], partner: 'nested' },
         config.spendTokenDecimals,
         config.buyTokenDecimals,
     );
@@ -63,7 +63,7 @@ export async function defaultParaSwapFetcher(config: AggregatorRequest): Promise
         undefined,
         undefined,
         undefined,
-        { ignoreChecks: true, ignoreGasEstimate: true, excludeDEXS: ['ParaSwapPool', 'ParaSwapLimitOrders'] },
+        { ignoreChecks: true, ignoreGasEstimate: true },
         config.spendTokenDecimals,
         config.buyTokenDecimals,
     );
