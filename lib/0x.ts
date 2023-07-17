@@ -56,7 +56,11 @@ export async function defaultZeroExFetcher(
     const url = zxQuoteUrl(config, _zeroExUrl);
     let retry = 0;
     while (true) {
-        const response = await fetchLimited(url);
+        const response = await fetchLimited(url, {
+            headers: {
+                '0x-api-key': '804a2ea2-e25e-4979-9df4-f5d7e8ccb52a',
+            },
+        });
 
         // 429: too many requests => retry 10 times, over 5 seconds
         if (response.status === 429) {
