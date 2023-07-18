@@ -23,7 +23,7 @@ function zxEndpoint(chain: Chain) {
     switch (chain) {
         case Chain.eth:
             return 'https://api.0x.org/';
-        case Chain.bsc:
+        case Chain.bnb:
             return 'https://bsc.api.0x.org/';
         case Chain.avax:
             return 'https://avalanche.api.0x.org/';

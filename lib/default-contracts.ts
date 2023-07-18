@@ -16,7 +16,7 @@ export const defaultContracts: { [key in keyof typeof Chain]: ConnectionConfig }
         wrappedToken: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
         chainId: 1,
     },
-    bsc: {
+    bnb: {
         providerConfig: 'https://bsc-dataseed.binance.org/',
         factoryAddress: '0x9A065e500CDCd01c0a506B0EB1A8B060B0cE1379',
         wrappedToken: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
