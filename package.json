@@ -1,6 +1,6 @@
 {
     "name": "@nested-finance/lego-contracts",
-    "version": "1.5.11",
+    "version": "1.5.12",
     "main": "index.js",
     "license": "MIT",
     "repository": "https://github.com/NestedFi/nested-lego-js",
