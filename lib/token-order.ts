@@ -28,6 +28,7 @@ export class TokenOrderImpl implements _TokenOrder {
         public slippage: number,
         readonly feesOn: 'input' | 'output',
         readonly actionType: ActionType,
+        readonly flatOnError = false,
     ) {
         this.inputToken = normalize(this.inputToken);
         this.outputToken = normalize(this.outputToken);
@@ -302,7 +303,12 @@ export class TokenOrderImpl implements _TokenOrder {
                         this.operator = aggregatorQuote.aggregator;
                         resolve(true);
                     } catch (e) {
-                        reject(e);
+                        if (this.flatOnError) {
+                            this._prepareFlat();
+                            resolve(true);
+                        } else {
+                            reject(e);
+                        }
                     }
                 }, 30),
             };

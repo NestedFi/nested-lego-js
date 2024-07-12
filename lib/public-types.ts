@@ -538,7 +538,7 @@ export interface INestedContracts {
     sellTokensToWallet(portfolioId: PortfolioIdIsh, tokenToReceive: HexString): PortfolioSeller;
 
     /** Get assets in portfolio */
-    getAssets(portfolioId: PortfolioIdIsh): PromiseLike<Holding[]>;
+    getAssets(portfolioId: PortfolioIdIsh, getAssets?: boolean): PromiseLike<Holding[]>;
 
     /** Get claimable fees for the given token */
     getClaimableFees(token: HexString, ofOwner?: HexString): PromiseLike<BigNumber>;

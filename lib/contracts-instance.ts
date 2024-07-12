@@ -31,6 +31,7 @@ import { PorfolioSenderImpl } from './porfolio-sender';
 import { computeDeposit, computeWithdrawal } from './budget-computer';
 import { PortfolioComplexOperationImpl } from './portfolio-complex-operation';
 
+const DUST_QTY = '0x30';
 export class NestedContractsInstance implements INestedContracts {
     constructor(readonly chain: Chain, readonly tools: NestedTools, private _signer: Signer | undefined) {}
 
@@ -110,19 +111,21 @@ export class NestedContractsInstance implements INestedContracts {
     }
 
     /** Get assets in portfolio */
-    async getAssets(portfolioId: PortfolioIdIsh): Promise<Holding[]> {
+    async getAssets(portfolioId: PortfolioIdIsh, getDusts = false): Promise<Holding[]> {
         if (!portfolioId) {
             return [];
         }
         const nftId = this._inferNftId(portfolioId);
         const records = await this.tools.recordsContract();
         const [tokens, amounts]: [tokens: HexString[], amounts: BigNumberish[]] = await records.tokenHoldings(nftId);
-        return tokens.map<Holding>((t, i) => ({
-            // only select the properties we'd like to have
-            token: unwrap(this.chain, t),
-            tokenErc20: normalize(t),
-            amount: BigNumber.from(amounts[i]),
-        }));
+        return tokens
+            .map<Holding>((t, i) => ({
+                // only select the properties we'd like to have
+                token: unwrap(this.chain, t),
+                tokenErc20: normalize(t),
+                amount: BigNumber.from(amounts[i]),
+            }))
+            .filter(h => h.amount.gte(DUST_QTY) || getDusts);
     }
 
     /** Infer the related NFT id, and throw an error if not on the right chain */
